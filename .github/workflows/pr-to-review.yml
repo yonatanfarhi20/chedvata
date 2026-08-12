@@ -1,0 +1,17 @@
+name: Move PR to In Review
+on:
+  pull_request:
+    types: [opened, reopened]
+
+jobs:
+  move_to_in_review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update PR Status in Project
+        uses: leonsteinhaeuser/project-beta-automations@v2.2.1
+        with:
+          gh_token: ${{ secrets.PROJECT_TOKEN }}
+          user: yonatanfarhi20
+          project_id: 15
+          resource_type: pull_request
+          workflow_issue_status: "לפני מיזוג"
