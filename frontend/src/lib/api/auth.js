@@ -20,3 +20,10 @@ export function requestPasswordReset(payload) {
     body: payload,
   });
 }
+
+export function resetPassword(token, payload) {
+  return apiRequest(`/api/auth/reset-password/${encodeURIComponent(token)}`, {
+    method: 'POST',
+    body: payload,
+  });
+}
