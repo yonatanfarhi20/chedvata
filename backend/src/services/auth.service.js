@@ -2,15 +2,16 @@ const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const { ERROR_MESSAGES } = require('../constants/errors');
 const { USER_STATUS } = require('../constants/user');
-const { EMAIL_VERIFICATION_TTL_MS } = require('../constants/auth');
+const { EMAIL_VERIFICATION_TTL_MS, PASSWORD_RESET_TTL_MS } = require('../constants/auth');
 const { parseRegisterPayload } = require('../validators/register');
 const { parseLoginPayload } = require('../validators/login');
+const { parseForgotPasswordPayload } = require('../validators/forgotPassword');
 const { generateOpaqueToken, hashToken } = require('./token.service');
 const { createAccessToken } = require('./jwt.service');
 const { sendEmail } = require('./email.service');
 const { buildVerifyAccountEmail } = require('../templates/emails/verifyAccount');
 const { getApiBaseUrl } = require('../config/app');
-const { hasElapsed } = require('../utils/time');
+const { hasElapsed, getExpiryDate } = require('../utils/time');
 
 async function register(payload) {
   const data = parseRegisterPayload(payload);
@@ -134,8 +135,30 @@ async function login(payload) {
   return { user, token };
 }
 
+async function forgotPassword(payload) {
+  const { email } = parseForgotPasswordPayload(payload);
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return;
+  }
+
+  const { hashedToken } = generateOpaqueToken();
+
+  await User.updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: getExpiryDate(PASSWORD_RESET_TTL_MS),
+      },
+    },
+  );
+}
+
 module.exports = {
   register,
   verifyEmail,
   login,
+  forgotPassword,
 };

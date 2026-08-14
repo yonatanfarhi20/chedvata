@@ -20,6 +20,7 @@ const ERROR_MESSAGES = Object.freeze({
   USER_APPROVED: 'התלמיד אושר בהצלחה',
   USER_REJECTED: 'הבקשה נדחתה והמשתמש נמחק',
   PENDING_USER_NOT_FOUND: 'לא נמצא משתמש הממתין לאישור הנהלה',
+  FORGOT_PASSWORD_SUCCESS: 'קישור נשלח למייל',
 });
 
 module.exports = {
