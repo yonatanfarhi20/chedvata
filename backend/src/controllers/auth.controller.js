@@ -10,6 +10,16 @@ async function register(req, res) {
   });
 }
 
+async function verifyEmail(req, res) {
+  const user = await authService.verifyEmail(req.params.token);
+
+  return res.status(200).json({
+    message: ERROR_MESSAGES.EMAIL_VERIFIED,
+    user,
+  });
+}
+
 module.exports = {
   register,
+  verifyEmail,
 };
