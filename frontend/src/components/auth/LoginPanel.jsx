@@ -1,7 +1,26 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LoginForm from '@/components/auth/LoginForm';
+import { getDashboardPath } from '@/lib/auth/constants';
+import { useSession } from '@/lib/auth/session';
 
 export default function LoginPanel() {
+  const router = useRouter();
+  const session = useSession();
+
+  useEffect(() => {
+    if (session) {
+      router.replace(getDashboardPath(session.user.role));
+    }
+  }, [router, session]);
+
+  if (session) {
+    return null;
+  }
+
   return (
     <>
       <h1 className="mb-6 text-center text-xl font-semibold text-foreground">
