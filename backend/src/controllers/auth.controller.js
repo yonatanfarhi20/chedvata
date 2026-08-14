@@ -29,8 +29,26 @@ async function login(req, res) {
   });
 }
 
+async function forgotPassword(req, res) {
+  await authService.forgotPassword(req.body);
+
+  return res.status(200).json({
+    message: ERROR_MESSAGES.FORGOT_PASSWORD_SUCCESS,
+  });
+}
+
+async function resetPassword(req, res) {
+  await authService.resetPassword(req.params.token, req.body);
+
+  return res.status(200).json({
+    message: ERROR_MESSAGES.RESET_PASSWORD_SUCCESS,
+  });
+}
+
 module.exports = {
   register,
   verifyEmail,
   login,
+  forgotPassword,
+  resetPassword,
 };

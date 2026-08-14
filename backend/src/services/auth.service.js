@@ -2,15 +2,18 @@ const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const { ERROR_MESSAGES } = require('../constants/errors');
 const { USER_STATUS } = require('../constants/user');
-const { EMAIL_VERIFICATION_TTL_MS } = require('../constants/auth');
+const { EMAIL_VERIFICATION_TTL_MS, PASSWORD_RESET_TTL_MS } = require('../constants/auth');
 const { parseRegisterPayload } = require('../validators/register');
 const { parseLoginPayload } = require('../validators/login');
+const { parseForgotPasswordPayload } = require('../validators/forgotPassword');
+const { parseResetPasswordPayload } = require('../validators/resetPassword');
 const { generateOpaqueToken, hashToken } = require('./token.service');
 const { createAccessToken } = require('./jwt.service');
 const { sendEmail } = require('./email.service');
 const { buildVerifyAccountEmail } = require('../templates/emails/verifyAccount');
-const { getApiBaseUrl } = require('../config/app');
-const { hasElapsed } = require('../utils/time');
+const { buildResetPasswordEmail } = require('../templates/emails/resetPassword');
+const { getApiBaseUrl, getClientOrigin } = require('../config/app');
+const { hasElapsed, getExpiryDate } = require('../utils/time');
 
 async function register(payload) {
   const data = parseRegisterPayload(payload);
@@ -134,8 +137,84 @@ async function login(payload) {
   return { user, token };
 }
 
+async function forgotPassword(payload) {
+  const { email } = parseForgotPasswordPayload(payload);
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return;
+  }
+
+  const { token, hashedToken } = generateOpaqueToken();
+
+  await User.updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: getExpiryDate(PASSWORD_RESET_TTL_MS),
+      },
+    },
+  );
+
+  const resetUrl = `${getClientOrigin()}/reset-password/${encodeURIComponent(token)}`;
+
+  try {
+    await sendEmail({
+      to: user.email,
+      ...buildResetPasswordEmail({
+        firstName: user.firstName,
+        resetUrl,
+      }),
+    });
+  } catch (error) {
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $unset: {
+          resetPasswordToken: 1,
+          resetPasswordExpires: 1,
+        },
+      },
+    );
+    console.error(error);
+    throw new AppError(ERROR_MESSAGES.EMAIL_SEND_FAILED, 500);
+  }
+}
+
+async function resetPassword(rawToken, payload) {
+  const token = typeof rawToken === 'string' ? rawToken.trim() : '';
+
+  if (!token) {
+    throw new AppError(ERROR_MESSAGES.INVALID_RESET_TOKEN, 400);
+  }
+
+  const { password } = parseResetPasswordPayload(payload);
+
+  const user = await User.findOne({
+    resetPasswordToken: hashToken(token),
+  }).select('+password +resetPasswordToken +resetPasswordExpires');
+
+  if (!user) {
+    throw new AppError(ERROR_MESSAGES.INVALID_RESET_TOKEN, 400);
+  }
+
+  if (!user.resetPasswordExpires || user.resetPasswordExpires.getTime() <= Date.now()) {
+    throw new AppError(ERROR_MESSAGES.EXPIRED_RESET_TOKEN, 400);
+  }
+
+  user.password = password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  return user;
+}
+
 module.exports = {
   register,
   verifyEmail,
   login,
+  forgotPassword,
+  resetPassword,
 };

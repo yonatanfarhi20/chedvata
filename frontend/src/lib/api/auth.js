@@ -13,3 +13,17 @@ export function loginUser(payload) {
     body: payload,
   });
 }
+
+export function requestPasswordReset(payload) {
+  return apiRequest('/api/auth/forgot-password', {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+export function resetPassword(token, payload) {
+  return apiRequest(`/api/auth/reset-password/${encodeURIComponent(token)}`, {
+    method: 'POST',
+    body: payload,
+  });
+}
