@@ -10,7 +10,8 @@ const { generateOpaqueToken, hashToken } = require('./token.service');
 const { createAccessToken } = require('./jwt.service');
 const { sendEmail } = require('./email.service');
 const { buildVerifyAccountEmail } = require('../templates/emails/verifyAccount');
-const { getApiBaseUrl } = require('../config/app');
+const { buildResetPasswordEmail } = require('../templates/emails/resetPassword');
+const { getApiBaseUrl, getClientOrigin } = require('../config/app');
 const { hasElapsed, getExpiryDate } = require('../utils/time');
 
 async function register(payload) {
@@ -143,7 +144,7 @@ async function forgotPassword(payload) {
     return;
   }
 
-  const { hashedToken } = generateOpaqueToken();
+  const { token, hashedToken } = generateOpaqueToken();
 
   await User.updateOne(
     { _id: user._id },
@@ -154,6 +155,30 @@ async function forgotPassword(payload) {
       },
     },
   );
+
+  const resetUrl = `${getClientOrigin()}/reset-password/${encodeURIComponent(token)}`;
+
+  try {
+    await sendEmail({
+      to: user.email,
+      ...buildResetPasswordEmail({
+        firstName: user.firstName,
+        resetUrl,
+      }),
+    });
+  } catch (error) {
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $unset: {
+          resetPasswordToken: 1,
+          resetPasswordExpires: 1,
+        },
+      },
+    );
+    console.error(error);
+    throw new AppError(ERROR_MESSAGES.EMAIL_SEND_FAILED, 500);
+  }
 }
 
 module.exports = {
