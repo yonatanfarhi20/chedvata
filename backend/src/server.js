@@ -2,10 +2,12 @@ require('dotenv').config();
 
 const app = require('./app');
 const connectDb = require('./config/db');
+const { getJwtSecret } = require('./config/jwt');
 
 const port = Number(process.env.PORT) || 5000;
 
 async function start() {
+  getJwtSecret();
   await connectDb();
 
   app.listen(port, () => {

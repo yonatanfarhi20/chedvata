@@ -1,10 +1,13 @@
+import { getAccessToken } from '@/lib/auth/session';
+
 export class ApiError extends Error {
-  constructor(message, { status, errors, data } = {}) {
+  constructor(message, { status, errors, data, code } = {}) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.errors = errors && typeof errors === 'object' ? errors : {};
     this.data = data;
+    this.code = code || data?.code || null;
   }
 }
 
@@ -34,6 +37,7 @@ async function parseJson(response) {
 
 export async function apiRequest(path, { method = 'GET', body, headers } = {}) {
   const url = `${getApiBaseUrl()}${path}`;
+  const token = getAccessToken();
   let response;
 
   try {
@@ -41,6 +45,7 @@ export async function apiRequest(path, { method = 'GET', body, headers } = {}) {
       method,
       headers: {
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...headers,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -56,6 +61,7 @@ export async function apiRequest(path, { method = 'GET', body, headers } = {}) {
       status: response.status,
       errors: data?.errors,
       data,
+      code: data?.code,
     });
   }
 

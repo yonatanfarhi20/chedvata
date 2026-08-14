@@ -6,3 +6,10 @@ export function registerUser(payload) {
     body: payload,
   });
 }
+
+export function loginUser(payload) {
+  return apiRequest('/api/auth/login', {
+    method: 'POST',
+    body: payload,
+  });
+}
