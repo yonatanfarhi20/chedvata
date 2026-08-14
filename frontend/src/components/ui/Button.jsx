@@ -1,5 +1,6 @@
 const VARIANT_STYLES = {
   primary: 'bg-primary text-white hover:bg-primary-hover',
+  secondary: 'border border-border bg-card text-foreground hover:bg-background',
   success: 'bg-success text-white hover:bg-success-hover',
   danger: 'bg-error text-white hover:bg-error-hover',
 };

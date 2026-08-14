@@ -1,6 +1,6 @@
 import Button from '@/components/ui/Button';
 
-export default function PendingUserActions({ user, onApprove, onReject }) {
+export default function PendingUserActions({ user, onApprove, onReject, disabled = false }) {
   const fullName = `${user.firstName} ${user.lastName}`.trim();
 
   return (
@@ -9,6 +9,7 @@ export default function PendingUserActions({ user, onApprove, onReject }) {
         variant="success"
         size="sm"
         fullWidth={false}
+        disabled={disabled}
         onClick={() => onApprove?.(user)}
         aria-label={`אשר תלמיד ${fullName}`}
       >
@@ -18,6 +19,7 @@ export default function PendingUserActions({ user, onApprove, onReject }) {
         variant="danger"
         size="sm"
         fullWidth={false}
+        disabled={disabled}
         onClick={() => onReject?.(user)}
         aria-label={`דחה בקשה של ${fullName}`}
       >

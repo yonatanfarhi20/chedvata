@@ -9,21 +9,27 @@ export default function Modal({
   children,
   onClose,
   closeLabel = 'הבנתי',
+  confirmLabel,
+  confirmVariant = 'primary',
+  onConfirm,
+  confirmDisabled = false,
 }) {
+  const hasConfirm = typeof onConfirm === 'function';
+
   useEffect(() => {
     if (!open) {
       return undefined;
     }
 
     function handleKeyDown(event) {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !confirmDisabled) {
         onClose?.();
       }
     }
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose]);
+  }, [open, onClose, confirmDisabled]);
 
   if (!open) {
     return null;
@@ -33,12 +39,13 @@ export default function Modal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
       role="presentation"
-      onClick={onClose}
+      onClick={confirmDisabled ? undefined : onClose}
     >
       <div
-        role="dialog"
+        role={hasConfirm ? 'alertdialog' : 'dialog'}
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
+        aria-describedby="modal-description"
         className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
@@ -47,10 +54,28 @@ export default function Modal({
             {title}
           </h2>
         ) : null}
-        <div className="mb-6 text-center text-sm leading-6 text-foreground">{children}</div>
-        <Button type="button" onClick={onClose}>
-          {closeLabel}
-        </Button>
+        <div id="modal-description" className="mb-6 text-center text-sm leading-6 text-foreground">
+          {children}
+        </div>
+        {hasConfirm ? (
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button type="button" variant="secondary" onClick={onClose} disabled={confirmDisabled}>
+              {closeLabel}
+            </Button>
+            <Button
+              type="button"
+              variant={confirmVariant}
+              onClick={onConfirm}
+              disabled={confirmDisabled}
+            >
+              {confirmLabel}
+            </Button>
+          </div>
+        ) : (
+          <Button type="button" onClick={onClose}>
+            {closeLabel}
+          </Button>
+        )}
       </div>
     </div>
   );
