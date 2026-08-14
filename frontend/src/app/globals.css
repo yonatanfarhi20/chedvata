@@ -7,7 +7,9 @@
   --primary: #1e3a5f;
   --primary-hover: #152c48;
   --error: #dc2626;
+  --error-hover: #b91c1c;
   --success: #15803d;
+  --success-hover: #166534;
   --muted: #57534e;
   --border: #d6d3d1;
 }
@@ -19,7 +21,9 @@
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-error: var(--error);
+  --color-error-hover: var(--error-hover);
   --color-success: var(--success);
+  --color-success-hover: var(--success-hover);
   --color-muted: var(--muted);
   --color-border: var(--border);
   --font-sans: var(--font-heebo);

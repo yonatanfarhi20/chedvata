@@ -1,4 +1,4 @@
-import { getAccessToken } from '@/lib/auth/session';
+import { clearSession, getAccessToken } from '@/lib/auth/session';
 
 export class ApiError extends Error {
   constructor(message, { status, errors, data, code } = {}) {
@@ -57,6 +57,10 @@ export async function apiRequest(path, { method = 'GET', body, headers } = {}) {
   const data = await parseJson(response);
 
   if (!response.ok) {
+    if (response.status === 401 && token) {
+      clearSession();
+    }
+
     throw new ApiError(data?.message || 'אירעה שגיאה בשרת', {
       status: response.status,
       errors: data?.errors,
@@ -66,4 +70,24 @@ export async function apiRequest(path, { method = 'GET', body, headers } = {}) {
   }
 
   return data;
+}
+
+export function getErrorMessage(error, fallback = 'אירעה שגיאה. נסו שוב.') {
+  if (error instanceof ApiError) {
+    if (error.status === 403) {
+      return error.message || 'אין הרשאה לגשת למשאב זה';
+    }
+
+    if (error.status === 401) {
+      return error.message || 'נדרשת התחברות למערכת';
+    }
+
+    return error.message || fallback;
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
 }
