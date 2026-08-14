@@ -53,6 +53,7 @@ export default function PendingUsersTable({
   onApprove,
   onReject,
   disabledUserId,
+  actionsDisabled = false,
   leavingIds = [],
 }) {
   return (
@@ -64,7 +65,9 @@ export default function PendingUsersTable({
             user={user}
             onApprove={onApprove}
             onReject={onReject}
-            disabled={disabledUserId === user._id || leavingIds.includes(user._id)}
+            disabled={
+              actionsDisabled || disabledUserId === user._id || leavingIds.includes(user._id)
+            }
             isLeaving={leavingIds.includes(user._id)}
           />
         ))}
@@ -101,7 +104,7 @@ export default function PendingUsersTable({
                       user={user}
                       onApprove={onApprove}
                       onReject={onReject}
-                      disabled={disabledUserId === user._id || isLeaving}
+                      disabled={actionsDisabled || disabledUserId === user._id || isLeaving}
                     />
                   </td>
                 </tr>

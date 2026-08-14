@@ -12,7 +12,7 @@ export default function RejectUserModal({ user, onClose, onConfirm, isConfirming
       open={Boolean(user)}
       title="דחיית בקשה"
       closeLabel="ביטול"
-      confirmLabel="דחה בקשה"
+      confirmLabel={isConfirming ? 'דוחה בקשה...' : 'דחה בקשה'}
       confirmVariant="danger"
       confirmDisabled={isConfirming}
       onClose={onClose}
