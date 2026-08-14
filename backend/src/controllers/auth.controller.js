@@ -1,0 +1,25 @@
+const authService = require('../services/auth.service');
+const { ERROR_MESSAGES } = require('../constants/errors');
+
+async function register(req, res) {
+  const user = await authService.register(req.body);
+
+  return res.status(201).json({
+    message: ERROR_MESSAGES.REGISTER_SUCCESS,
+    user,
+  });
+}
+
+async function verifyEmail(req, res) {
+  const user = await authService.verifyEmail(req.params.token);
+
+  return res.status(200).json({
+    message: ERROR_MESSAGES.EMAIL_VERIFIED,
+    user,
+  });
+}
+
+module.exports = {
+  register,
+  verifyEmail,
+};
