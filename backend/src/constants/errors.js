@@ -17,6 +17,9 @@ const ERROR_MESSAGES = Object.freeze({
   PENDING_ADMIN_APPROVAL:
     'חשבונך אומת בהצלחה וממתין לאישור ההנהלה. עדכון יישלח אליך למייל.',
   LOGIN_SUCCESS: 'ההתחברות בוצעה בהצלחה',
+  USER_APPROVED: 'התלמיד אושר בהצלחה',
+  USER_REJECTED: 'הבקשה נדחתה והמשתמש נמחק',
+  PENDING_USER_NOT_FOUND: 'לא נמצא משתמש הממתין לאישור הנהלה',
 });
 
 module.exports = {
