@@ -4,7 +4,9 @@ const { ERROR_MESSAGES } = require('../constants/errors');
 const { USER_STATUS } = require('../constants/user');
 const { EMAIL_VERIFICATION_TTL_MS } = require('../constants/auth');
 const { parseRegisterPayload } = require('../validators/register');
+const { parseLoginPayload } = require('../validators/login');
 const { generateOpaqueToken, hashToken } = require('./token.service');
+const { createAccessToken } = require('./jwt.service');
 const { sendEmail } = require('./email.service');
 const { buildVerifyAccountEmail } = require('../templates/emails/verifyAccount');
 const { getApiBaseUrl } = require('../config/app');
@@ -98,7 +100,42 @@ async function verifyEmail(rawToken) {
   return verifiedUser;
 }
 
+async function login(payload) {
+  const { email, password } = parseLoginPayload(payload);
+
+  const user = await User.findOne({ email }).select('+password');
+
+  if (!user || !(await user.comparePassword(password))) {
+    throw new AppError(ERROR_MESSAGES.INVALID_CREDENTIALS, 401, {
+      errors: { password: ERROR_MESSAGES.INVALID_CREDENTIALS },
+    });
+  }
+
+  if (user.status === USER_STATUS.PENDING_EMAIL_VERIFICATION) {
+    throw new AppError(ERROR_MESSAGES.PENDING_EMAIL_VERIFICATION, 403, {
+      code: USER_STATUS.PENDING_EMAIL_VERIFICATION,
+    });
+  }
+
+  if (user.status === USER_STATUS.PENDING_ADMIN_APPROVAL) {
+    throw new AppError(ERROR_MESSAGES.PENDING_ADMIN_APPROVAL, 403, {
+      code: USER_STATUS.PENDING_ADMIN_APPROVAL,
+    });
+  }
+
+  if (user.status !== USER_STATUS.ACTIVE) {
+    throw new AppError(ERROR_MESSAGES.INVALID_CREDENTIALS, 401, {
+      errors: { password: ERROR_MESSAGES.INVALID_CREDENTIALS },
+    });
+  }
+
+  const token = createAccessToken(user);
+
+  return { user, token };
+}
+
 module.exports = {
   register,
   verifyEmail,
+  login,
 };

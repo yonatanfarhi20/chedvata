@@ -19,7 +19,18 @@ async function verifyEmail(req, res) {
   });
 }
 
+async function login(req, res) {
+  const { user, token } = await authService.login(req.body);
+
+  return res.status(200).json({
+    message: ERROR_MESSAGES.LOGIN_SUCCESS,
+    token,
+    user,
+  });
+}
+
 module.exports = {
   register,
   verifyEmail,
+  login,
 };
