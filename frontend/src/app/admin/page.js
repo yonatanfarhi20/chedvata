@@ -1,5 +1,5 @@
 import RequireAuth from '@/components/auth/RequireAuth';
-import DashboardHome from '@/components/dashboard/DashboardHome';
+import PendingUsersPanel from '@/components/admin/PendingUsersPanel';
 import { SENIOR_MANAGEMENT_ROLES } from '@/lib/auth/constants';
 
 export const metadata = {
@@ -9,7 +9,7 @@ export const metadata = {
 export default function AdminDashboardPage() {
   return (
     <RequireAuth allowedRoles={[...SENIOR_MANAGEMENT_ROLES]}>
-      <DashboardHome title="אזור הנהלה" />
+      <PendingUsersPanel />
     </RequireAuth>
   );
 }
