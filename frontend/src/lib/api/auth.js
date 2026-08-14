@@ -13,3 +13,10 @@ export function loginUser(payload) {
     body: payload,
   });
 }
+
+export function requestPasswordReset(payload) {
+  return apiRequest('/api/auth/forgot-password', {
+    method: 'POST',
+    body: payload,
+  });
+}
