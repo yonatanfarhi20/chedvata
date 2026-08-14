@@ -74,18 +74,13 @@ const userSchema = new mongoose.Schema(
   },
 );
 
-userSchema.pre('save', async function hashPassword(next) {
+userSchema.pre('save', async function hashPassword() {
   if (!this.isModified('password')) {
-    return next();
+    return;
   }
 
-  try {
-    const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS) || 12;
-    this.password = await bcrypt.hash(this.password, saltRounds);
-    return next();
-  } catch (error) {
-    return next(error);
-  }
+  const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS) || 12;
+  this.password = await bcrypt.hash(this.password, saltRounds);
 });
 
 userSchema.methods.comparePassword = function comparePassword(candidatePassword) {
