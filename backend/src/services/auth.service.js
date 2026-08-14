@@ -6,6 +6,7 @@ const { EMAIL_VERIFICATION_TTL_MS, PASSWORD_RESET_TTL_MS } = require('../constan
 const { parseRegisterPayload } = require('../validators/register');
 const { parseLoginPayload } = require('../validators/login');
 const { parseForgotPasswordPayload } = require('../validators/forgotPassword');
+const { parseResetPasswordPayload } = require('../validators/resetPassword');
 const { generateOpaqueToken, hashToken } = require('./token.service');
 const { createAccessToken } = require('./jwt.service');
 const { sendEmail } = require('./email.service');
@@ -181,9 +182,39 @@ async function forgotPassword(payload) {
   }
 }
 
+async function resetPassword(rawToken, payload) {
+  const token = typeof rawToken === 'string' ? rawToken.trim() : '';
+
+  if (!token) {
+    throw new AppError(ERROR_MESSAGES.INVALID_RESET_TOKEN, 400);
+  }
+
+  const { password } = parseResetPasswordPayload(payload);
+
+  const user = await User.findOne({
+    resetPasswordToken: hashToken(token),
+  }).select('+password +resetPasswordToken +resetPasswordExpires');
+
+  if (!user) {
+    throw new AppError(ERROR_MESSAGES.INVALID_RESET_TOKEN, 400);
+  }
+
+  if (!user.resetPasswordExpires || user.resetPasswordExpires.getTime() <= Date.now()) {
+    throw new AppError(ERROR_MESSAGES.EXPIRED_RESET_TOKEN, 400);
+  }
+
+  user.password = password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  return user;
+}
+
 module.exports = {
   register,
   verifyEmail,
   login,
   forgotPassword,
+  resetPassword,
 };
