@@ -9,6 +9,8 @@ const ERROR_MESSAGES = Object.freeze({
   INVALID_VERIFICATION_TOKEN: 'קישור האימות אינו תקין',
   EXPIRED_VERIFICATION_TOKEN: 'תוקף קישור האימות פג',
   EMAIL_VERIFIED: 'המייל אומת בהצלחה. החשבון ממתין לאישור ההנהלה.',
+  UNAUTHORIZED: 'נדרשת התחברות למערכת',
+  FORBIDDEN: 'אין הרשאה לגשת למשאב זה',
 });
 
 module.exports = {
