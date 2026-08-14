@@ -3,6 +3,17 @@ const { getCronTimezone } = require('../config/cron');
 
 const scheduledJobs = new Map();
 
+function wrapJobTask(name, task) {
+  return async (...args) => {
+    try {
+      return await task(...args);
+    } catch (error) {
+      console.error(`[cron] job "${name}" failed`, error);
+      return undefined;
+    }
+  };
+}
+
 function scheduleJob({ name, expression, task, options = {} }) {
   if (!name || typeof name !== 'string') {
     throw new Error('scheduleJob requires a job name');
@@ -20,7 +31,7 @@ function scheduleJob({ name, expression, task, options = {} }) {
     throw new Error(`A job named "${name}" is already scheduled`);
   }
 
-  const scheduledTask = cron.schedule(expression, task, {
+  const scheduledTask = cron.schedule(expression, wrapJobTask(name, task), {
     timezone: getCronTimezone(),
     noOverlap: true,
     ...options,
