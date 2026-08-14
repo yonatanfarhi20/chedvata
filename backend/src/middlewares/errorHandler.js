@@ -21,7 +21,21 @@ function errorHandler(err, _req, res, next) {
   }
 
   if (err.code === 11000) {
-    return res.status(409).json({ message: ERROR_MESSAGES.DUPLICATE_USER });
+    const duplicateFields = Object.keys(err.keyPattern || err.keyValue || {});
+    const errors = {};
+
+    if (duplicateFields.includes('email')) {
+      errors.email = ERROR_MESSAGES.DUPLICATE_USER;
+    }
+
+    if (duplicateFields.includes('idNumber')) {
+      errors.idNumber = ERROR_MESSAGES.DUPLICATE_USER;
+    }
+
+    return res.status(409).json({
+      message: ERROR_MESSAGES.DUPLICATE_USER,
+      ...(Object.keys(errors).length > 0 ? { errors } : {}),
+    });
   }
 
   if (err instanceof AppError) {

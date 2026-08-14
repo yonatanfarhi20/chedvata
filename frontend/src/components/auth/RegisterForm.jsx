@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import TextField from '@/components/ui/TextField';
+import { ApiError } from '@/lib/api/client';
+import { registerUser } from '@/lib/api/auth';
 import {
   REGISTER_FIELDS,
   REGISTER_INITIAL_VALUES,
@@ -10,10 +13,27 @@ import {
   validateRegisterForm,
 } from '@/lib/validation/register';
 
-export default function RegisterForm({ onSubmit }) {
+function mapServerErrors(error) {
+  if (error instanceof ApiError && Object.keys(error.errors).length > 0) {
+    return error.errors;
+  }
+
+  if (error instanceof ApiError && error.status === 409) {
+    return {
+      email: error.message,
+      idNumber: error.message,
+    };
+  }
+
+  return null;
+}
+
+export default function RegisterForm({ onSuccess }) {
   const [values, setValues] = useState(REGISTER_INITIAL_VALUES);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function updateFieldError(name, nextValues) {
     const message = validateRegisterField(name, nextValues[name]);
@@ -44,8 +64,9 @@ export default function RegisterForm({ onSubmit }) {
     updateFieldError(name, values);
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    setFormError('');
 
     const nextTouched = Object.fromEntries(
       Object.keys(REGISTER_INITIAL_VALUES).map((name) => [name, true]),
@@ -59,7 +80,22 @@ export default function RegisterForm({ onSubmit }) {
       return;
     }
 
-    onSubmit?.(values);
+    setIsSubmitting(true);
+
+    try {
+      await registerUser(values);
+      onSuccess?.(values.email.trim());
+    } catch (error) {
+      const serverErrors = mapServerErrors(error);
+
+      if (serverErrors) {
+        setErrors(serverErrors);
+      } else {
+        setFormError(error.message || 'אירעה שגיאה. נסו שוב.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const nameFields = REGISTER_FIELDS.filter(
@@ -70,13 +106,16 @@ export default function RegisterForm({ onSubmit }) {
   );
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4" aria-busy={isSubmitting}>
+      {formError ? <Alert>{formError}</Alert> : null}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {nameFields.map((field) => (
           <TextField
             key={field.name}
             {...field}
             required
+            disabled={isSubmitting}
             value={values[field.name]}
             error={errors[field.name]}
             onChange={handleChange}
@@ -90,6 +129,7 @@ export default function RegisterForm({ onSubmit }) {
           key={field.name}
           {...field}
           required
+          disabled={isSubmitting}
           value={values[field.name]}
           error={errors[field.name]}
           onChange={handleChange}
@@ -97,8 +137,8 @@ export default function RegisterForm({ onSubmit }) {
         />
       ))}
 
-      <Button type="submit" className="mt-2">
-        צור חשבון
+      <Button type="submit" className="mt-2" disabled={isSubmitting}>
+        {isSubmitting ? 'שולח...' : 'צור חשבון'}
       </Button>
     </form>
   );

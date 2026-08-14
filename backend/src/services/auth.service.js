@@ -18,7 +18,17 @@ async function register(payload) {
   });
 
   if (existingUser) {
-    throw new AppError(ERROR_MESSAGES.DUPLICATE_USER, 409);
+    const errors = {};
+
+    if (existingUser.email === data.email) {
+      errors.email = ERROR_MESSAGES.DUPLICATE_USER;
+    }
+
+    if (existingUser.idNumber === data.idNumber) {
+      errors.idNumber = ERROR_MESSAGES.DUPLICATE_USER;
+    }
+
+    throw new AppError(ERROR_MESSAGES.DUPLICATE_USER, 409, { errors });
   }
 
   const { token, hashedToken } = generateOpaqueToken();
