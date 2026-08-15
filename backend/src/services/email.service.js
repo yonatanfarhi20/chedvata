@@ -14,6 +14,8 @@ function createTransport() {
       user,
       pass,
     },
+    family: 4, 
+    connectionTimeout: 10000
   });
 }
 
