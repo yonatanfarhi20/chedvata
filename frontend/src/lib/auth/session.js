@@ -92,6 +92,16 @@ export function getAccessToken() {
   return getSession()?.token ?? null;
 }
 
+export function updateSessionUser(user) {
+  const session = getSession();
+
+  if (!session?.token || !user) {
+    return;
+  }
+
+  saveSession({ token: session.token, user });
+}
+
 export function useSession() {
   return useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
 }
