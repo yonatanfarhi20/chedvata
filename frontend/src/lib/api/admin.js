@@ -22,6 +22,12 @@ export function updateUser(userId, payload) {
   });
 }
 
+export function deleteUser(userId) {
+  return apiRequest(`/api/admin/users/${encodeURIComponent(userId)}?confirm=true`, {
+    method: 'DELETE',
+  });
+}
+
 export function approveUser(userId) {
   return apiRequest(`/api/admin/users/${encodeURIComponent(userId)}/approve`, {
     method: 'PUT',

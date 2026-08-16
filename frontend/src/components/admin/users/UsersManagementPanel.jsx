@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import DeleteConfirmationModal from '@/components/admin/users/DeleteConfirmationModal';
 import UserFormModal from '@/components/admin/users/UserFormModal';
 import UsersTable from '@/components/admin/users/UsersTable';
 import UsersTableToolbar from '@/components/admin/users/UsersTableToolbar';
@@ -8,7 +9,7 @@ import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import Toast from '@/components/ui/Toast';
 import { matchesUserSearch } from '@/lib/admin/users';
-import { getUsers } from '@/lib/api/admin';
+import { deleteUser, getUsers } from '@/lib/api/admin';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 
 export default function UsersManagementPanel() {
@@ -18,6 +19,9 @@ export default function UsersManagementPanel() {
   const [loadError, setLoadError] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const loadRequestIdRef = useRef(0);
 
@@ -86,6 +90,45 @@ export default function UsersManagementPanel() {
     setIsFormOpen(false);
   }
 
+  function handleDeleteUser(user) {
+    setDeleteError('');
+    setUserToDelete(user);
+  }
+
+  function handleCloseDelete() {
+    if (isDeleting) {
+      return;
+    }
+
+    setUserToDelete(null);
+    setDeleteError('');
+  }
+
+  async function handleConfirmDelete() {
+    if (!userToDelete || isDeleting) {
+      return;
+    }
+
+    const pendingUser = userToDelete;
+    setIsDeleting(true);
+    setDeleteError('');
+
+    try {
+      const data = await deleteUser(pendingUser._id);
+      setUserToDelete(null);
+      setUsers((current) => current.filter((item) => item._id !== pendingUser._id));
+      setToastMessage(data?.message || 'המשתמש נמחק בהצלחה');
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        return;
+      }
+
+      setDeleteError(getErrorMessage(error, 'מחיקת המשתמש נכשלה. נסו שוב.'));
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   async function handleUserSaved(message) {
     setToastMessage(message);
     await loadUsers({ silent: true });
@@ -128,7 +171,12 @@ export default function UsersManagementPanel() {
         ) : null}
 
         {!isLoading && filteredUsers.length > 0 ? (
-          <UsersTable users={filteredUsers} onEdit={handleEditUser} />
+          <UsersTable
+            users={filteredUsers}
+            onEdit={handleEditUser}
+            onDelete={handleDeleteUser}
+            actionsDisabled={isDeleting}
+          />
         ) : null}
       </section>
 
@@ -137,6 +185,14 @@ export default function UsersManagementPanel() {
         user={selectedUser}
         onClose={handleCloseForm}
         onSaved={handleUserSaved}
+      />
+
+      <DeleteConfirmationModal
+        user={userToDelete}
+        isConfirming={isDeleting}
+        error={deleteError}
+        onClose={handleCloseDelete}
+        onConfirm={handleConfirmDelete}
       />
 
       <Toast

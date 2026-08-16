@@ -89,6 +89,7 @@ export default function Modal({
               variant={confirmVariant}
               onClick={onConfirm}
               disabled={confirmDisabled}
+              className="inline-flex items-center justify-center"
             >
               {confirmLabel}
             </Button>
