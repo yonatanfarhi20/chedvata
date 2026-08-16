@@ -64,6 +64,17 @@ export function MessagesIcon() {
   );
 }
 
+export function UsersIcon() {
+  return (
+    <Icon>
+      <path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1" />
+      <circle cx="9.5" cy="7.5" r="2.5" />
+      <path d="M21 19v-1a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a2.5 2.5 0 0 1 0 4.74" />
+    </Icon>
+  );
+}
+
 export function CloseIcon() {
   return (
     <svg
@@ -82,6 +93,7 @@ export function CloseIcon() {
 
 export const SIDEBAR_ICONS = {
   dashboard: DashboardIcon,
+  users: UsersIcon,
   attendance: AttendanceIcon,
   phones: PhonesIcon,
   leaves: LeavesIcon,

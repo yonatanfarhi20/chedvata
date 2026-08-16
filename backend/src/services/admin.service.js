@@ -7,15 +7,61 @@ const { sendEmail } = require('./email.service');
 const { getClientOrigin } = require('../config/app');
 const { buildAccountApprovedEmail } = require('../templates/emails/accountApproved');
 const { buildAccountRejectedEmail } = require('../templates/emails/accountRejected');
+const {
+  parseAdminCreateUserPayload,
+  parseAdminUpdateUserPayload,
+} = require('../validators/adminUser');
 
-function parseUserId(rawId) {
+function parseUserId(rawId, notFoundMessage = ERROR_MESSAGES.USER_NOT_FOUND) {
   const id = typeof rawId === 'string' ? rawId.trim() : '';
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new AppError(ERROR_MESSAGES.PENDING_USER_NOT_FOUND, 404);
+    throw new AppError(notFoundMessage, 404);
   }
 
   return id;
+}
+
+async function assertUniqueUserFields({ email, idNumber, excludeId } = {}) {
+  const clauses = [];
+
+  if (email) {
+    clauses.push({ email });
+  }
+
+  if (idNumber) {
+    clauses.push({ idNumber });
+  }
+
+  if (clauses.length === 0) {
+    return;
+  }
+
+  const query = { $or: clauses };
+
+  if (excludeId) {
+    query._id = { $ne: excludeId };
+  }
+
+  const existingUsers = await User.find(query).select('email idNumber');
+
+  if (existingUsers.length === 0) {
+    return;
+  }
+
+  const errors = {};
+
+  existingUsers.forEach((user) => {
+    if (email && user.email === email) {
+      errors.email = ERROR_MESSAGES.DUPLICATE_EMAIL;
+    }
+
+    if (idNumber && user.idNumber === idNumber) {
+      errors.idNumber = ERROR_MESSAGES.DUPLICATE_ID_NUMBER;
+    }
+  });
+
+  throw new AppError(ERROR_MESSAGES.DUPLICATE_USER, 409, { errors });
 }
 
 async function listPendingUsers() {
@@ -25,7 +71,7 @@ async function listPendingUsers() {
 }
 
 async function approveUser(rawId) {
-  const id = parseUserId(rawId);
+  const id = parseUserId(rawId, ERROR_MESSAGES.PENDING_USER_NOT_FOUND);
 
   const user = await User.findOneAndUpdate(
     {
@@ -62,7 +108,7 @@ async function approveUser(rawId) {
 }
 
 async function rejectUser(rawId) {
-  const id = parseUserId(rawId);
+  const id = parseUserId(rawId, ERROR_MESSAGES.PENDING_USER_NOT_FOUND);
 
   const user = await User.findOne({
     _id: id,
@@ -97,8 +143,75 @@ async function rejectUser(rawId) {
   return deletedUser;
 }
 
+async function listUsers() {
+  return User.find().sort({ lastName: 1, firstName: 1, createdAt: 1 });
+}
+
+async function createUser(payload) {
+  const data = parseAdminCreateUserPayload(payload);
+
+  await assertUniqueUserFields({
+    email: data.email,
+    idNumber: data.idNumber,
+  });
+
+  return User.create({
+    ...data,
+    status: USER_STATUS.ACTIVE,
+  });
+}
+
+async function updateUser(rawId, payload) {
+  const id = parseUserId(rawId);
+  const data = parseAdminUpdateUserPayload(payload);
+
+  await assertUniqueUserFields({
+    email: data.email,
+    idNumber: data.idNumber,
+    excludeId: id,
+  });
+
+  const user = await User.findById(id).select('+password');
+
+  if (!user) {
+    throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, 404);
+  }
+
+  Object.entries(data).forEach(([field, value]) => {
+    if (field === 'classId' && value === null) {
+      user.classId = undefined;
+      return;
+    }
+
+    user[field] = value;
+  });
+
+  await user.save();
+  return user;
+}
+
+async function deleteUser(rawId, { actorId } = {}) {
+  const id = parseUserId(rawId);
+
+  if (actorId && String(actorId) === id) {
+    throw new AppError(ERROR_MESSAGES.CANNOT_DELETE_SELF, 400);
+  }
+
+  const deletedUser = await User.findByIdAndDelete(id);
+
+  if (!deletedUser) {
+    throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, 404);
+  }
+
+  return deletedUser;
+}
+
 module.exports = {
   listPendingUsers,
   approveUser,
   rejectUser,
+  listUsers,
+  createUser,
+  updateUser,
+  deleteUser,
 };
