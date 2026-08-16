@@ -33,3 +33,30 @@ export function SearchIcon() {
     </Icon>
   );
 }
+
+export function ChevronDownIcon({ className = 'h-4 w-4 shrink-0' }) {
+  return (
+    <Icon className={className}>
+      <path d="M6 9l6 6 6-6" />
+    </Icon>
+  );
+}
+
+export function UserIcon() {
+  return (
+    <Icon>
+      <circle cx="12" cy="8" r="3.25" />
+      <path d="M5 19.5c1.6-3.2 4-4.75 7-4.75s5.4 1.55 7 4.75" />
+    </Icon>
+  );
+}
+
+export function LogoutIcon() {
+  return (
+    <Icon>
+      <path d="M15 12H4" />
+      <path d="M11 8l4 4-4 4" />
+      <path d="M15 5h3a2 2 0 012 2v10a2 2 0 01-2 2h-3" />
+    </Icon>
+  );
+}
