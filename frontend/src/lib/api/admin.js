@@ -50,3 +50,10 @@ export function updateAdminProfile(payload) {
     body: payload,
   });
 }
+
+export function updateAdminPassword(payload) {
+  return apiRequest('/api/admin/profile/password', {
+    method: 'PUT',
+    body: payload,
+  });
+}

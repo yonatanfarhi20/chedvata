@@ -1,4 +1,5 @@
 import PersonalDetailsCard from '@/components/admin/profile/PersonalDetailsCard';
+import SecuritySettingsCard from '@/components/admin/profile/SecuritySettingsCard';
 
 export default function AdminProfile() {
   return (
@@ -10,6 +11,7 @@ export default function AdminProfile() {
 
       <div className="mt-6 flex flex-col gap-6">
         <PersonalDetailsCard />
+        <SecuritySettingsCard />
       </div>
     </div>
   );
