@@ -10,6 +10,12 @@ export const SENIOR_MANAGEMENT_ROLES = Object.freeze([
   USER_ROLE.ROSH_YESHIVA,
 ]);
 
+export const ADMIN_ROLES = Object.freeze([
+  USER_ROLE.RABBI,
+  USER_ROLE.MASHGIACH,
+  USER_ROLE.ROSH_YESHIVA,
+]);
+
 export const USER_STATUS = Object.freeze({
   PENDING_EMAIL_VERIFICATION: 'pending_email_verification',
   PENDING_ADMIN_APPROVAL: 'pending_admin_approval',
