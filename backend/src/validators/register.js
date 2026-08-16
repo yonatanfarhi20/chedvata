@@ -86,4 +86,5 @@ function parseRegisterPayload(payload = {}) {
 
 module.exports = {
   parseRegisterPayload,
+  validateField,
 };
