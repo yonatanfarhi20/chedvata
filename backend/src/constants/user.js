@@ -16,8 +16,15 @@ const SENIOR_MANAGEMENT_ROLES = Object.freeze([
   USER_ROLE.ROSH_YESHIVA,
 ]);
 
+const ADMIN_ROLES = Object.freeze([
+  USER_ROLE.RABBI,
+  USER_ROLE.MASHGIACH,
+  USER_ROLE.ROSH_YESHIVA,
+]);
+
 module.exports = {
   USER_STATUS,
   USER_ROLE,
   SENIOR_MANAGEMENT_ROLES,
+  ADMIN_ROLES,
 };
