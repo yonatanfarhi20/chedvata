@@ -34,6 +34,7 @@ export default function Sidebar({ isOpen = false, closeSidebar }) {
       />
 
       <aside
+        id="admin-sidebar"
         className={`fixed inset-y-0 start-0 z-40 flex w-72 flex-col bg-primary text-white shadow-xl transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'
         }`}
