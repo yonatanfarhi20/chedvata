@@ -11,7 +11,7 @@ export default function Topbar({ isSidebarOpen = false, toggleSidebar }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-card shadow-sm">
+    <header className="z-20 shrink-0 border-b border-border bg-card shadow-sm">
       <div className="flex h-16 items-center gap-3 px-4 md:px-6">
         <button
           type="button"

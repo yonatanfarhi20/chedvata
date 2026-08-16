@@ -1,9 +1,9 @@
-import AdminNavigationFrame from '@/components/layout/AdminNavigationFrame';
+import AdminAppLayout from '@/components/layout/AdminLayout';
 
 export const metadata = {
   title: 'הנהלה | ישיבת חדוותא',
 };
 
 export default function AdminLayout({ children }) {
-  return <AdminNavigationFrame>{children}</AdminNavigationFrame>;
+  return <AdminAppLayout>{children}</AdminAppLayout>;
 }
