@@ -8,6 +8,20 @@ export function getUsers() {
   return apiRequest('/api/admin/users');
 }
 
+export function createUser(payload) {
+  return apiRequest('/api/admin/users', {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+export function updateUser(userId, payload) {
+  return apiRequest(`/api/admin/users/${encodeURIComponent(userId)}`, {
+    method: 'PUT',
+    body: payload,
+  });
+}
+
 export function approveUser(userId) {
   return apiRequest(`/api/admin/users/${encodeURIComponent(userId)}/approve`, {
     method: 'PUT',
