@@ -80,3 +80,22 @@ export function togglePhoneDeposit({ studentId, isDeposited }) {
     body: { studentId, isDeposited },
   });
 }
+
+export function searchStudents(name) {
+  const params = new URLSearchParams({ name });
+  return apiRequest(`/api/admin/users/search?${params.toString()}`);
+}
+
+export function createLeave(payload) {
+  return apiRequest('/api/admin/leaves', {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+export function createMessage(payload) {
+  return apiRequest('/api/admin/messages', {
+    method: 'POST',
+    body: payload,
+  });
+}
