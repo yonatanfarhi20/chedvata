@@ -1,5 +1,23 @@
 import { formatClassAffiliation, getUserFullName } from '@/lib/admin/users';
 
+function WarningIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4 shrink-0 text-red-600"
+      aria-hidden="true"
+    >
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+      <path d="M12 9v4M12 17h.01" />
+    </svg>
+  );
+}
+
 function DepositToggle({ checked, disabled, onToggle }) {
   return (
     <button
@@ -25,11 +43,21 @@ function DepositToggle({ checked, disabled, onToggle }) {
 
 export default function StudentDepositCard({ student, disabled = false, onToggle }) {
   const isDeposited = Boolean(student?.isDeposited);
+  const isAlertRequired = Boolean(student?.isAlertRequired);
 
   return (
-    <article className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+    <article
+      className={`flex items-center justify-between gap-3 rounded-xl p-4 shadow-sm transition-colors ${
+        isAlertRequired
+          ? 'border-2 border-red-500 bg-red-50'
+          : 'border border-border bg-card'
+      }`}
+    >
       <div className="min-w-0">
-        <p className="truncate font-semibold text-foreground">{getUserFullName(student)}</p>
+        <p className="flex items-center gap-2 font-semibold text-foreground">
+          {isAlertRequired ? <WarningIcon /> : null}
+          <span className="truncate">{getUserFullName(student)}</span>
+        </p>
         <p className="mt-1 truncate text-sm text-muted">{formatClassAffiliation(student?.classId)}</p>
       </div>
 

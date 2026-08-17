@@ -20,6 +20,7 @@ export default function PhoneDeposits() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [isPastDeadline, setIsPastDeadline] = useState(false);
   const [toast, setToast] = useState({ open: false, message: '', variant: 'error' });
   const loadRequestIdRef = useRef(0);
   const toggleRequestIdRef = useRef(new Map());
@@ -38,6 +39,7 @@ export default function PhoneDeposits() {
       }
 
       setStudents(Array.isArray(data?.students) ? data.students : []);
+      setIsPastDeadline(Boolean(data?.isPastDeadline));
     } catch (error) {
       if (requestId !== loadRequestIdRef.current) {
         return;
@@ -48,6 +50,7 @@ export default function PhoneDeposits() {
       }
 
       setStudents([]);
+      setIsPastDeadline(false);
       setLoadError(getErrorMessage(error, 'לא ניתן לטעון את סטטוס הפקדת הטלפונים.'));
     } finally {
       if (requestId === loadRequestIdRef.current) {
@@ -97,6 +100,7 @@ export default function PhoneDeposits() {
       ...item,
       isDeposited: nextDeposited,
       depositTime: nextDeposited ? new Date().toISOString() : null,
+      isAlertRequired: nextDeposited ? false : isPastDeadline,
     }));
 
     try {
