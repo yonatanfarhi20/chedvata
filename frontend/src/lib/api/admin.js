@@ -73,3 +73,10 @@ export function saveAttendance(payload) {
 export function getPhoneDepositStatus() {
   return apiRequest('/api/admin/phones/status');
 }
+
+export function togglePhoneDeposit({ studentId, isDeposited }) {
+  return apiRequest('/api/admin/phones/deposit', {
+    method: 'POST',
+    body: { studentId, isDeposited },
+  });
+}

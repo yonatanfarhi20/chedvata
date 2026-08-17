@@ -2,16 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PhoneDepositSummaryBar from '@/components/admin/phones/PhoneDepositSummaryBar';
+import StudentDepositCard from '@/components/admin/phones/StudentDepositCard';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import TextField from '@/components/ui/TextField';
+import Toast from '@/components/ui/Toast';
 import {
   getPhoneDepositSummary,
   getPhoneStudentId,
   matchesPhoneStudentSearch,
 } from '@/lib/admin/phones';
-import { formatClassAffiliation, getUserFullName } from '@/lib/admin/users';
-import { getPhoneDepositStatus } from '@/lib/api/admin';
+import { getPhoneDepositStatus, togglePhoneDeposit } from '@/lib/api/admin';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 
 export default function PhoneDeposits() {
@@ -19,7 +20,9 @@ export default function PhoneDeposits() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [toast, setToast] = useState({ open: false, message: '', variant: 'error' });
   const loadRequestIdRef = useRef(0);
+  const toggleRequestIdRef = useRef(new Map());
 
   const loadStatus = useCallback(async () => {
     const requestId = loadRequestIdRef.current + 1;
@@ -67,6 +70,65 @@ export default function PhoneDeposits() {
     () => students.filter((student) => matchesPhoneStudentSearch(student, searchQuery)),
     [students, searchQuery],
   );
+
+  function handleCloseToast() {
+    setToast({ open: false, message: '', variant: 'error' });
+  }
+
+  function updateStudent(studentId, updater) {
+    setStudents((current) =>
+      current.map((item) => (getPhoneStudentId(item) === studentId ? updater(item) : item)),
+    );
+  }
+
+  async function handleToggle(student) {
+    const studentId = getPhoneStudentId(student);
+
+    if (!studentId) {
+      return;
+    }
+
+    const previous = student;
+    const nextDeposited = !student.isDeposited;
+    const requestId = (toggleRequestIdRef.current.get(studentId) || 0) + 1;
+    toggleRequestIdRef.current.set(studentId, requestId);
+
+    updateStudent(studentId, (item) => ({
+      ...item,
+      isDeposited: nextDeposited,
+      depositTime: nextDeposited ? new Date().toISOString() : null,
+    }));
+
+    try {
+      const data = await togglePhoneDeposit({
+        studentId,
+        isDeposited: nextDeposited,
+      });
+
+      if (toggleRequestIdRef.current.get(studentId) !== requestId) {
+        return;
+      }
+
+      if (data?.student) {
+        updateStudent(studentId, (item) => ({ ...item, ...data.student }));
+      }
+    } catch (error) {
+      if (toggleRequestIdRef.current.get(studentId) !== requestId) {
+        return;
+      }
+
+      if (error instanceof ApiError && error.status === 401) {
+        return;
+      }
+
+      updateStudent(studentId, () => previous);
+      setToast({
+        open: true,
+        message: getErrorMessage(error, 'עדכון סטטוס ההפקדה נכשל. נסו שוב.'),
+        variant: 'error',
+      });
+    }
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-background p-4 md:p-8">
@@ -123,21 +185,8 @@ export default function PhoneDeposits() {
                 const studentId = getPhoneStudentId(student);
 
                 return (
-                  <li
-                    key={studentId}
-                    className="rounded-xl border border-border bg-card p-4 shadow-sm"
-                  >
-                    <p className="font-semibold text-foreground">{getUserFullName(student)}</p>
-                    <p className="mt-1 text-sm text-muted">
-                      {formatClassAffiliation(student.classId)}
-                    </p>
-                    <p
-                      className={`mt-3 text-sm font-medium ${
-                        student.isDeposited ? 'text-success' : 'text-muted'
-                      }`}
-                    >
-                      {student.isDeposited ? 'הופקד' : 'לא הופקד'}
-                    </p>
+                  <li key={studentId}>
+                    <StudentDepositCard student={student} onToggle={handleToggle} />
                   </li>
                 );
               })}
@@ -145,6 +194,13 @@ export default function PhoneDeposits() {
           ) : null}
         </div>
       </section>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={handleCloseToast}
+      />
     </div>
   );
 }
