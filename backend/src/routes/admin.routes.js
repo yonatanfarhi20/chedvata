@@ -35,6 +35,7 @@ router.delete(
   adminController.rejectUser,
 );
 
+router.get('/users/search', adminController.searchStudents);
 router.get('/users', adminController.listUsers);
 router.post('/users', adminController.createUser);
 router.put('/users/:id', adminController.updateUser);

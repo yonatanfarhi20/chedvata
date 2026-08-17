@@ -50,6 +50,7 @@ const ERROR_MESSAGES = Object.freeze({
   LEAVE_CREATED: 'החופשה נוספה בהצלחה',
   MESSAGE_RECIPIENT_REQUIRED: 'יש לבחור תלמיד או כיתה לשליחת ההודעה',
   MESSAGE_SENT: 'ההודעה נשלחה בהצלחה',
+  STUDENT_NOT_IN_SYSTEM: 'תלמיד זה אינו מופיע במערכת',
 });
 
 module.exports = {

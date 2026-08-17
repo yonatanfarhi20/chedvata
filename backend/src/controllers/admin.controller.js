@@ -31,6 +31,12 @@ async function listUsers(_req, res) {
   return res.status(200).json({ users });
 }
 
+async function searchStudents(req, res) {
+  const users = await adminService.searchStudents(req.query);
+
+  return res.status(200).json({ users });
+}
+
 async function createUser(req, res) {
   const user = await adminService.createUser(req.body);
 
@@ -66,6 +72,7 @@ module.exports = {
   approveUser,
   rejectUser,
   listUsers,
+  searchStudents,
   createUser,
   updateUser,
   deleteUser,

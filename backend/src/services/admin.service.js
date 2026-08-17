@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const { ERROR_MESSAGES } = require('../constants/errors');
-const { USER_STATUS } = require('../constants/user');
+const { USER_ROLE, USER_STATUS } = require('../constants/user');
 const { sendEmail } = require('./email.service');
 const { getClientOrigin } = require('../config/app');
 const { buildAccountApprovedEmail } = require('../templates/emails/accountApproved');
@@ -11,6 +11,16 @@ const {
   parseAdminCreateUserPayload,
   parseAdminUpdateUserPayload,
 } = require('../validators/adminUser');
+const { escapeRegex } = require('../utils/regex');
+
+const STUDENT_SEARCH_LIMIT = 20;
+const STUDENT_SEARCH_MAX_LENGTH = 100;
+
+function studentNotFoundError() {
+  return new AppError(ERROR_MESSAGES.STUDENT_NOT_IN_SYSTEM, 404, {
+    error: ERROR_MESSAGES.STUDENT_NOT_IN_SYSTEM,
+  });
+}
 
 function parseUserId(rawId, notFoundMessage = ERROR_MESSAGES.USER_NOT_FOUND) {
   const id = typeof rawId === 'string' ? rawId.trim() : '';
@@ -206,6 +216,51 @@ async function deleteUser(rawId, { actorId } = {}) {
   return deletedUser;
 }
 
+async function searchStudents(query = {}) {
+  const rawName = typeof query.name === 'string' ? query.name.trim() : '';
+
+  if (!rawName) {
+    throw studentNotFoundError();
+  }
+
+  const escaped = escapeRegex(rawName.slice(0, STUDENT_SEARCH_MAX_LENGTH));
+
+  let users;
+
+  try {
+    const nameRegex = new RegExp(escaped, 'i');
+
+    users = await User.find({
+      role: USER_ROLE.STUDENT,
+      $or: [
+        { firstName: nameRegex },
+        { lastName: nameRegex },
+        {
+          $expr: {
+            $regexMatch: {
+              input: { $concat: ['$firstName', ' ', '$lastName'] },
+              regex: escaped,
+              options: 'i',
+            },
+          },
+        },
+      ],
+    })
+      .select('firstName lastName profileImage classId idNumber')
+      .sort({ lastName: 1, firstName: 1, createdAt: 1 })
+      .limit(STUDENT_SEARCH_LIMIT);
+  } catch (error) {
+    console.error('[users] student search failed', error);
+    throw studentNotFoundError();
+  }
+
+  if (!users || users.length === 0) {
+    throw studentNotFoundError();
+  }
+
+  return users;
+}
+
 module.exports = {
   listPendingUsers,
   approveUser,
@@ -214,4 +269,5 @@ module.exports = {
   createUser,
   updateUser,
   deleteUser,
+  searchStudents,
 };
