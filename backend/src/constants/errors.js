@@ -43,6 +43,8 @@ const ERROR_MESSAGES = Object.freeze({
   INVALID_ATTENDANCE_STATUS: 'סטטוס הנוכחות אינו תקין',
   ATTENDANCE_RECORDS_REQUIRED: 'יש לשלוח מערך דיווחי נוכחות',
   ATTENDANCE_SAVED: 'הנוכחות נשמרה בהצלחה',
+  INVALID_PHONE_DEPOSIT_STATUS: 'סטטוס ההפקדה אינו תקין',
+  PHONE_DEPOSIT_UPDATED: 'סטטוס ההפקדה עודכן בהצלחה',
 });
 
 module.exports = {

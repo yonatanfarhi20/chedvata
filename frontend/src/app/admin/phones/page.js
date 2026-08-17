@@ -1,9 +1,9 @@
-import AdminModulePlaceholder from '@/components/layout/AdminModulePlaceholder';
+import PhoneDeposits from '@/components/admin/phones/PhoneDeposits';
 
 export const metadata = {
   title: 'הפקדת טלפונים | ישיבת חדוותא',
 };
 
 export default function PhonesPage() {
-  return <AdminModulePlaceholder title="הפקדת טלפונים" />;
+  return <PhoneDeposits />;
 }

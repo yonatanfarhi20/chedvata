@@ -1,6 +1,7 @@
 const express = require('express');
 const adminController = require('../controllers/admin.controller');
 const attendanceController = require('../controllers/attendance.controller');
+const phoneController = require('../controllers/phone.controller');
 const profileController = require('../controllers/profile.controller');
 const verifyAdmin = require('../middlewares/verifyAdmin.middleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
@@ -39,5 +40,8 @@ router.delete('/users/:id', adminController.deleteUser);
 
 router.get('/attendance', attendanceController.listAttendance);
 router.post('/attendance', attendanceController.saveAttendance);
+
+router.get('/phones/status', phoneController.getDailyStatus);
+router.post('/phones/deposit', phoneController.toggleDeposit);
 
 module.exports = router;
