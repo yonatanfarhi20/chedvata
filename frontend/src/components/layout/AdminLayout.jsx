@@ -13,7 +13,7 @@ export default function AdminLayout({ children }) {
     <RequireAuth allowedRoles={[...ADMIN_ROLES]}>
       <div className="h-dvh max-h-dvh overflow-hidden bg-background">
         <Sidebar isOpen={isSidebarOpen} closeSidebar={closeSidebar} />
-        <div className="flex h-full min-h-0 flex-col lg:ps-72">
+        <div className="flex h-full min-h-0 flex-col lg:ms-72">
           <Topbar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
           <main
             className={`min-h-0 flex-1 overscroll-y-contain ${
