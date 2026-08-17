@@ -69,3 +69,7 @@ export function saveAttendance(payload) {
     body: payload,
   });
 }
+
+export function getPhoneDepositStatus() {
+  return apiRequest('/api/admin/phones/status');
+}
