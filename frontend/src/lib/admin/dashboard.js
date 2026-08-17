@@ -61,6 +61,15 @@ export function formatDashboardDate(dateValue) {
   });
 }
 
+export function getDashboardAlerts(overview) {
+  return Array.isArray(overview?.alerts) ? overview.alerts : [];
+}
+
+export function getStudentsOnLeaveToday(overview) {
+  const students = overview?.leaves?.students;
+  return Array.isArray(students) ? students : [];
+}
+
 export function getDashboardKpiCards(overview) {
   const attendance = overview?.attendance || {};
   const phones = overview?.phones || {};

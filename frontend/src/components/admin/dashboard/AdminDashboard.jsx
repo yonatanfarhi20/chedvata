@@ -2,8 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import KPICard from '@/components/admin/dashboard/KPICard';
+import LeavesTodayList from '@/components/admin/dashboard/LeavesTodayList';
+import OpenTasksList from '@/components/admin/dashboard/OpenTasksList';
 import Alert from '@/components/ui/Alert';
-import { formatDashboardDate, getDashboardKpiCards } from '@/lib/admin/dashboard';
+import {
+  formatDashboardDate,
+  getDashboardAlerts,
+  getDashboardKpiCards,
+  getStudentsOnLeaveToday,
+} from '@/lib/admin/dashboard';
 import { getDashboard } from '@/lib/api/admin';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 
@@ -51,6 +58,8 @@ export default function AdminDashboard() {
   }, []);
 
   const cards = getDashboardKpiCards(overview);
+  const alerts = getDashboardAlerts(overview);
+  const studentsOnLeave = getStudentsOnLeaveToday(overview);
   const formattedDate = formatDashboardDate(overview?.date);
 
   return (
@@ -74,18 +83,30 @@ export default function AdminDashboard() {
         {isLoading ? <p className="text-sm text-muted">טוען נתוני לוח בקרה...</p> : null}
 
         {!isLoading && !loadError ? (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-            {cards.map((card) => (
-              <KPICard
-                key={card.id}
-                title={card.title}
-                value={card.value}
-                icon={card.icon}
-                tone={card.tone}
-                hint={card.hint}
+          <>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+              {cards.map((card) => (
+                <KPICard
+                  key={card.id}
+                  title={card.title}
+                  value={card.value}
+                  icon={card.icon}
+                  tone={card.tone}
+                  hint={card.hint}
+                />
+              ))}
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
+              <div className="xl:col-span-2">
+                <OpenTasksList alerts={alerts} />
+              </div>
+              <LeavesTodayList
+                students={studentsOnLeave}
+                count={Number(overview?.leaves?.count) || 0}
               />
-            ))}
-          </div>
+            </div>
+          </>
         ) : null}
       </section>
     </div>
