@@ -45,6 +45,11 @@ const ERROR_MESSAGES = Object.freeze({
   ATTENDANCE_SAVED: 'הנוכחות נשמרה בהצלחה',
   INVALID_PHONE_DEPOSIT_STATUS: 'סטטוס ההפקדה אינו תקין',
   PHONE_DEPOSIT_UPDATED: 'סטטוס ההפקדה עודכן בהצלחה',
+  INVALID_LEAVE_DATE: 'תאריך החופשה אינו תקין',
+  INVALID_LEAVE_RANGE: 'תאריך הסיום חייב להיות באותו יום או אחרי תאריך ההתחלה',
+  LEAVE_CREATED: 'החופשה נוספה בהצלחה',
+  MESSAGE_RECIPIENT_REQUIRED: 'יש לבחור תלמיד או כיתה לשליחת ההודעה',
+  MESSAGE_SENT: 'ההודעה נשלחה בהצלחה',
 });
 
 module.exports = {
