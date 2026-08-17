@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import AlertListSkeleton from '@/components/admin/dashboard/AlertListSkeleton';
 import KPICard from '@/components/admin/dashboard/KPICard';
+import KPICardSkeleton from '@/components/admin/dashboard/KPICardSkeleton';
 import LeavesTodayList from '@/components/admin/dashboard/LeavesTodayList';
 import OpenTasksList from '@/components/admin/dashboard/OpenTasksList';
 import Alert from '@/components/ui/Alert';
+import Button from '@/components/ui/Button';
 import {
   formatDashboardDate,
   getDashboardAlerts,
@@ -14,48 +17,53 @@ import {
 import { getDashboard } from '@/lib/api/admin';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 
+const KPI_SKELETON_COUNT = 4;
+
 export default function AdminDashboard() {
   const [overview, setOverview] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const loadRequestIdRef = useRef(0);
 
-  useEffect(() => {
+  const loadDashboard = useCallback(async () => {
     const requestId = loadRequestIdRef.current + 1;
     loadRequestIdRef.current = requestId;
     setIsLoading(true);
     setLoadError('');
 
-    getDashboard()
-      .then((data) => {
-        if (requestId !== loadRequestIdRef.current) {
-          return;
-        }
+    try {
+      const data = await getDashboard();
 
-        setOverview(data && typeof data === 'object' ? data : null);
-      })
-      .catch((error) => {
-        if (requestId !== loadRequestIdRef.current) {
-          return;
-        }
+      if (requestId !== loadRequestIdRef.current) {
+        return;
+      }
 
-        if (error instanceof ApiError && error.status === 401) {
-          return;
-        }
+      setOverview(data && typeof data === 'object' ? data : null);
+    } catch (error) {
+      if (requestId !== loadRequestIdRef.current) {
+        return;
+      }
 
-        setOverview(null);
-        setLoadError(getErrorMessage(error, 'לא ניתן לטעון את נתוני לוח הבקרה.'));
-      })
-      .finally(() => {
-        if (requestId === loadRequestIdRef.current) {
-          setIsLoading(false);
-        }
-      });
+      if (error instanceof ApiError && error.status === 401) {
+        return;
+      }
+
+      setOverview(null);
+      setLoadError(getErrorMessage(error, 'לא ניתן לטעון את נתוני לוח הבקרה.'));
+    } finally {
+      if (requestId === loadRequestIdRef.current) {
+        setIsLoading(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboard();
 
     return () => {
       loadRequestIdRef.current += 1;
     };
-  }, []);
+  }, [loadDashboard]);
 
   const cards = getDashboardKpiCards(overview);
   const alerts = getDashboardAlerts(overview);
@@ -75,12 +83,29 @@ export default function AdminDashboard() {
         </header>
 
         {loadError ? (
-          <div className="mb-4">
+          <div className="mb-4 flex flex-col items-start gap-3">
             <Alert>{loadError}</Alert>
+            <Button type="button" variant="secondary" fullWidth={false} onClick={loadDashboard}>
+              נסה שוב
+            </Button>
           </div>
         ) : null}
 
-        {isLoading ? <p className="text-sm text-muted">טוען נתוני לוח בקרה...</p> : null}
+        {isLoading ? (
+          <>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: KPI_SKELETON_COUNT }, (_, index) => (
+                <KPICardSkeleton key={index} />
+              ))}
+            </div>
+            <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
+              <div className="xl:col-span-2">
+                <AlertListSkeleton rows={3} />
+              </div>
+              <AlertListSkeleton rows={4} />
+            </div>
+          </>
+        ) : null}
 
         {!isLoading && !loadError ? (
           <>
