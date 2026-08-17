@@ -1,16 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AttendanceFilters from '@/components/admin/attendance/AttendanceFilters';
+import AttendanceTable from '@/components/admin/attendance/AttendanceTable';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import {
   ACTIVITY_TYPE,
-  ATTENDANCE_STATUS_LABELS,
-  getAttendanceRecordStudentId,
+  buildAttendanceStatusMap,
   getTodayDateInputValue,
 } from '@/lib/admin/attendance';
-import { formatClassAffiliation, getUserFullName } from '@/lib/admin/users';
+import { getUserFullName } from '@/lib/admin/users';
 import { getAttendance, getUsers } from '@/lib/api/admin';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 import { USER_ROLE, USER_STATUS } from '@/lib/auth/constants';
@@ -24,6 +24,7 @@ export default function AttendanceManagementPanel() {
   const [activityType, setActivityType] = useState(ACTIVITY_TYPE.LESSON);
   const [students, setStudents] = useState([]);
   const [records, setRecords] = useState([]);
+  const [statuses, setStatuses] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const loadRequestIdRef = useRef(0);
@@ -110,7 +111,24 @@ export default function AttendanceManagementPanel() {
     };
   }, [date, activityType, loadAttendance]);
 
-  const studentsById = new Map(students.map((student) => [student._id, student]));
+  useEffect(() => {
+    setStatuses(buildAttendanceStatusMap(students, records));
+  }, [students, records]);
+
+  const sortedStudents = useMemo(
+    () =>
+      [...students].sort((left, right) =>
+        getUserFullName(left).localeCompare(getUserFullName(right), 'he'),
+      ),
+    [students],
+  );
+
+  function handleStatusChange(studentId, status) {
+    setStatuses((current) => ({
+      ...current,
+      [studentId]: status,
+    }));
+  }
 
   return (
     <div className="flex min-h-full flex-1 bg-background p-4 md:p-8">
@@ -118,7 +136,7 @@ export default function AttendanceManagementPanel() {
         <header className="mb-6">
           <h1 className="text-xl font-semibold text-foreground">ניהול נוכחות</h1>
           <p className="mt-1 text-sm text-muted">
-            בחרו תאריך וסוג פעילות כדי לדווח נוכחות לשיעור או לתפילה.
+            בחרו תאריך וסוג פעילות כדי לדווח נוכחות לשיעור או לתפילה. תלמיד ללא דיווח מסומן כנוכח.
           </p>
         </header>
 
@@ -146,45 +164,11 @@ export default function AttendanceManagementPanel() {
         {isLoading ? <p className="text-sm text-muted">טוען נתוני נוכחות...</p> : null}
 
         {!isLoading && !loadError ? (
-          <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
-            <table className="w-full min-w-[40rem] border-collapse text-start text-sm">
-              <thead className="bg-background text-muted">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">שם התלמיד</th>
-                  <th className="px-4 py-3 font-semibold">כיתה/שיעור</th>
-                  <th className="px-4 py-3 font-semibold">סטטוס</th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.length === 0 ? (
-                  <tr>
-                    <td className="px-4 py-6 text-muted" colSpan={3}>
-                      אין דיווחי נוכחות שמורים לחתך זה.
-                    </td>
-                  </tr>
-                ) : (
-                  records.map((record) => {
-                    const studentId = getAttendanceRecordStudentId(record);
-                    const student = studentsById.get(studentId);
-
-                    return (
-                      <tr key={record._id || studentId} className="border-t border-border">
-                        <td className="px-4 py-3 font-medium text-foreground">
-                          {student ? getUserFullName(student) : 'תלמיד'}
-                        </td>
-                        <td className="px-4 py-3 text-foreground">
-                          {formatClassAffiliation(student?.classId)}
-                        </td>
-                        <td className="px-4 py-3 text-foreground">
-                          {ATTENDANCE_STATUS_LABELS[record.status] || record.status}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          <AttendanceTable
+            students={sortedStudents}
+            statuses={statuses}
+            onStatusChange={handleStatusChange}
+          />
         ) : null}
       </section>
     </div>
