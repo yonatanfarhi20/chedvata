@@ -1,6 +1,7 @@
 const express = require('express');
 const adminController = require('../controllers/admin.controller');
 const attendanceController = require('../controllers/attendance.controller');
+const dashboardController = require('../controllers/dashboard.controller');
 const leaveController = require('../controllers/leave.controller');
 const messageController = require('../controllers/message.controller');
 const phoneController = require('../controllers/phone.controller');
@@ -18,6 +19,8 @@ profileRouter.get('/', profileController.getProfile);
 profileRouter.put('/', profileController.updateProfile);
 profileRouter.put('/password', profileController.updatePassword);
 router.use('/profile', profileRouter);
+
+router.get('/dashboard', dashboardController.getDashboard);
 
 router.get(
   '/users/pending',
