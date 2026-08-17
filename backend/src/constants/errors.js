@@ -38,6 +38,11 @@ const ERROR_MESSAGES = Object.freeze({
   PROFILE_UPDATED: 'הפרטים האישיים עודכנו בהצלחה',
   PASSWORD_CHANGED: 'הסיסמה עודכנה בהצלחה',
   INVALID_PROFILE_IMAGE: 'תמונת הפרופיל אינה תקינה',
+  INVALID_ATTENDANCE_DATE: 'תאריך הנוכחות אינו תקין',
+  INVALID_ACTIVITY_TYPE: 'סוג הפעילות חייב להיות שיעור או תפילה',
+  INVALID_ATTENDANCE_STATUS: 'סטטוס הנוכחות אינו תקין',
+  ATTENDANCE_RECORDS_REQUIRED: 'יש לשלוח מערך דיווחי נוכחות',
+  ATTENDANCE_SAVED: 'הנוכחות נשמרה בהצלחה',
 });
 
 module.exports = {
