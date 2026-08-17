@@ -92,3 +92,10 @@ export function createLeave(payload) {
     body: payload,
   });
 }
+
+export function createMessage(payload) {
+  return apiRequest('/api/admin/messages', {
+    method: 'POST',
+    body: payload,
+  });
+}
