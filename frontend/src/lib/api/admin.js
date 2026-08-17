@@ -57,3 +57,8 @@ export function updateAdminPassword(payload) {
     body: payload,
   });
 }
+
+export function getAttendance({ date, activityType }) {
+  const params = new URLSearchParams({ date, activityType });
+  return apiRequest(`/api/admin/attendance?${params.toString()}`);
+}
