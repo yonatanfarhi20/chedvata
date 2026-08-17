@@ -57,7 +57,11 @@ export async function apiRequest(path, { method = 'GET', body, headers } = {}) {
   const data = await parseJson(response);
 
   if (!response.ok) {
-    if (response.status === 401 && token) {
+    const isInvalidCurrentPassword =
+      response.status === 401 &&
+      (data?.message === 'סיסמה שגויה' || Boolean(data?.errors?.oldPassword));
+
+    if (response.status === 401 && token && !isInvalidCurrentPassword) {
       clearSession();
     }
 

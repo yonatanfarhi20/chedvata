@@ -37,6 +37,11 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Address is required'],
       trim: true,
     },
+    profileImage: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     password: {
       type: String,
       required: [true, 'Password is required'],

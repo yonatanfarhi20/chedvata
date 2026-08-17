@@ -34,6 +34,10 @@ const ERROR_MESSAGES = Object.freeze({
   INVALID_RESET_TOKEN: 'קישור האיפוס אינו תקין',
   EXPIRED_RESET_TOKEN: 'תוקף קישור האיפוס פג',
   RESET_PASSWORD_SUCCESS: 'הסיסמה עודכנה בהצלחה',
+  INVALID_CURRENT_PASSWORD: 'סיסמה שגויה',
+  PROFILE_UPDATED: 'הפרטים האישיים עודכנו בהצלחה',
+  PASSWORD_CHANGED: 'הסיסמה עודכנה בהצלחה',
+  INVALID_PROFILE_IMAGE: 'תמונת הפרופיל אינה תקינה',
 });
 
 module.exports = {

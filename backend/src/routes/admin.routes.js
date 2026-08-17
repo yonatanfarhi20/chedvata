@@ -1,12 +1,19 @@
 const express = require('express');
 const adminController = require('../controllers/admin.controller');
+const profileController = require('../controllers/profile.controller');
 const verifyAdmin = require('../middlewares/verifyAdmin.middleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
 const { SENIOR_MANAGEMENT_ROLES } = require('../constants/user');
 
 const router = express.Router();
+const profileRouter = express.Router();
 
 router.use(verifyAdmin);
+
+profileRouter.get('/', profileController.getProfile);
+profileRouter.put('/', profileController.updateProfile);
+profileRouter.put('/password', profileController.updatePassword);
+router.use('/profile', profileRouter);
 
 router.get(
   '/users/pending',

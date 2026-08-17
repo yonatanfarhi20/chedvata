@@ -7,6 +7,7 @@ export default function TextField({
   onChange,
   onBlur,
   error,
+  success = false,
   autoComplete,
   required = false,
   disabled = false,
@@ -45,8 +46,10 @@ export default function TextField({
         aria-describedby={error ? errorId : undefined}
         className={`w-full rounded-lg border bg-card px-3 py-2.5 text-base text-foreground outline-none transition-colors placeholder:text-muted disabled:cursor-not-allowed disabled:opacity-60 ${
           error
-            ? 'border-error focus:ring-2 focus:ring-error/20'
-            : 'border-border focus:border-primary focus:ring-2 focus:ring-primary/15'
+            ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
+            : success
+              ? 'border-green-500 ring-1 ring-green-500 focus:ring-2 focus:ring-green-500/20'
+              : 'border-border focus:border-primary focus:ring-2 focus:ring-primary/15'
         }`}
       />
       {error ? (

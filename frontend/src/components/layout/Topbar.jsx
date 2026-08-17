@@ -31,7 +31,7 @@ export default function Topbar({ isSidebarOpen = false, toggleSidebar }) {
           />
         </div>
 
-        <div className="shrink-0">
+        <div className="relative shrink-0">
           <TopbarProfile user={user} />
         </div>
       </div>
