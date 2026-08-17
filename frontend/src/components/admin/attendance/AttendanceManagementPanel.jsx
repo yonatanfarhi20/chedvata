@@ -2,16 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AttendanceFilters from '@/components/admin/attendance/AttendanceFilters';
+import AttendanceSaveBar from '@/components/admin/attendance/AttendanceSaveBar';
 import AttendanceTable from '@/components/admin/attendance/AttendanceTable';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
+import Toast from '@/components/ui/Toast';
 import {
   ACTIVITY_TYPE,
+  ATTENDANCE_STATUS,
   buildAttendanceStatusMap,
   getTodayDateInputValue,
 } from '@/lib/admin/attendance';
 import { getUserFullName } from '@/lib/admin/users';
-import { getAttendance, getUsers } from '@/lib/api/admin';
+import { getAttendance, getUsers, saveAttendance } from '@/lib/api/admin';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 import { USER_ROLE, USER_STATUS } from '@/lib/auth/constants';
 
@@ -26,7 +29,9 @@ export default function AttendanceManagementPanel() {
   const [records, setRecords] = useState([]);
   const [statuses, setStatuses] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [toast, setToast] = useState({ open: false, message: '', variant: 'success' });
   const loadRequestIdRef = useRef(0);
   const studentsRequestIdRef = useRef(0);
 
@@ -130,25 +135,74 @@ export default function AttendanceManagementPanel() {
     }));
   }
 
+  function handleCloseToast() {
+    setToast({ open: false, message: '', variant: 'success' });
+  }
+
+  async function handleSave() {
+    if (isSubmitting || isLoading || sortedStudents.length === 0) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    handleCloseToast();
+
+    const payload = {
+      date,
+      activityType,
+      records: sortedStudents.map((student) => ({
+        studentId: student._id,
+        status: statuses[student._id] || ATTENDANCE_STATUS.PRESENT,
+      })),
+    };
+
+    try {
+      const data = await saveAttendance(payload);
+      setRecords((current) => (Array.isArray(data?.records) ? data.records : current));
+      setToast({
+        open: true,
+        message: data?.message || 'הנוכחות נשמרה בהצלחה',
+        variant: 'success',
+      });
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        return;
+      }
+
+      setToast({
+        open: true,
+        message: getErrorMessage(error, 'שמירת הנוכחות נכשלה. נסו שוב.'),
+        variant: 'error',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const canSave = !isLoading && !loadError && sortedStudents.length > 0;
+
   return (
-    <div className="flex min-h-full flex-1 bg-background p-4 md:p-8">
-      <section className="mx-auto flex w-full max-w-6xl flex-col">
-        <header className="mb-6">
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-background p-4 md:p-8">
+      <section className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-1 flex-col" aria-busy={isSubmitting}>
+        <header className="mb-6 shrink-0">
           <h1 className="text-xl font-semibold text-foreground">ניהול נוכחות</h1>
           <p className="mt-1 text-sm text-muted">
             בחרו תאריך וסוג פעילות כדי לדווח נוכחות לשיעור או לתפילה. תלמיד ללא דיווח מסומן כנוכח.
           </p>
         </header>
 
-        <AttendanceFilters
-          date={date}
-          activityType={activityType}
-          onDateChange={setDate}
-          onActivityTypeChange={setActivityType}
-        />
+        <div className="shrink-0">
+          <AttendanceFilters
+            date={date}
+            activityType={activityType}
+            onDateChange={setDate}
+            onActivityTypeChange={setActivityType}
+            disabled={isSubmitting}
+          />
+        </div>
 
         {loadError ? (
-          <div className="mb-4 flex flex-col items-start gap-3">
+          <div className="mb-4 flex shrink-0 flex-col items-start gap-3">
             <Alert>{loadError}</Alert>
             <Button
               type="button"
@@ -161,16 +215,34 @@ export default function AttendanceManagementPanel() {
           </div>
         ) : null}
 
-        {isLoading ? <p className="text-sm text-muted">טוען נתוני נוכחות...</p> : null}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {isLoading ? <p className="text-sm text-muted">טוען נתוני נוכחות...</p> : null}
 
-        {!isLoading && !loadError ? (
-          <AttendanceTable
-            students={sortedStudents}
-            statuses={statuses}
-            onStatusChange={handleStatusChange}
+          {!isLoading && !loadError ? (
+            <AttendanceTable
+              students={sortedStudents}
+              statuses={statuses}
+              disabled={isSubmitting}
+              onStatusChange={handleStatusChange}
+            />
+          ) : null}
+        </div>
+
+        {canSave ? (
+          <AttendanceSaveBar
+            isSubmitting={isSubmitting}
+            disabled={isSubmitting}
+            onSave={handleSave}
           />
         ) : null}
       </section>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={handleCloseToast}
+      />
     </div>
   );
 }

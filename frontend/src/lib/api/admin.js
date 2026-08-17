@@ -62,3 +62,10 @@ export function getAttendance({ date, activityType }) {
   const params = new URLSearchParams({ date, activityType });
   return apiRequest(`/api/admin/attendance?${params.toString()}`);
 }
+
+export function saveAttendance(payload) {
+  return apiRequest('/api/admin/attendance', {
+    method: 'POST',
+    body: payload,
+  });
+}
