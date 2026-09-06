@@ -49,6 +49,13 @@ export const ATTENDANCE_STATUS_OPTIONS = Object.freeze([
   },
 ]);
 
+export const PRAYER_ATTENDANCE_STATUS_OPTIONS = Object.freeze(
+  ATTENDANCE_STATUS_OPTIONS.filter((option) => option.value !== ATTENDANCE_STATUS.ON_LEAVE).map(
+    (option) =>
+      option.value === ATTENDANCE_STATUS.LATE ? { ...option, label: 'איחר' } : option,
+  ),
+);
+
 export function getTodayDateInputValue(date = new Date()) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -79,4 +86,31 @@ export function buildAttendanceStatusMap(students, records) {
       recordsByStudentId.get(student._id) || ATTENDANCE_STATUS.PRESENT,
     ]),
   );
+}
+
+export function createDefaultAttendanceList(students) {
+  return students.map((student) => ({
+    studentId: student._id,
+    status: ATTENDANCE_STATUS.PRESENT,
+    student,
+  }));
+}
+
+export function applyExistingAttendanceRecords(attendanceList, records) {
+  const recordsByStudentId = new Map(
+    records.map((record) => [getAttendanceRecordStudentId(record), record.status]),
+  );
+
+  return attendanceList.map((item) => {
+    const existingStatus = recordsByStudentId.get(item.studentId);
+
+    if (!existingStatus) {
+      return item;
+    }
+
+    return {
+      ...item,
+      status: existingStatus,
+    };
+  });
 }

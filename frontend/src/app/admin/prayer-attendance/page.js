@@ -1,9 +1,9 @@
-import PrayerAttendanceSkeleton from '@/components/admin/prayer-attendance/PrayerAttendanceSkeleton';
+import PrayerAttendancePanel from '@/components/admin/prayer-attendance/PrayerAttendancePanel';
 
 export const metadata = {
   title: 'נוכחות תפילה | ישיבת חדוותא',
 };
 
 export default function PrayerAttendancePage() {
-  return <PrayerAttendanceSkeleton />;
+  return <PrayerAttendancePanel />;
 }
