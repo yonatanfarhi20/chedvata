@@ -1,11 +1,15 @@
 'use client';
 
 import { useEffect } from 'react';
-import { ADMIN_NAV_ITEMS } from '@/lib/admin/nav';
+import { getVisibleAdminNavItems } from '@/lib/admin/nav';
 import { CloseIcon } from '@/components/layout/SidebarIcons';
 import SidebarNavItem from '@/components/layout/SidebarNavItem';
+import { useSession } from '@/lib/auth/session';
 
 export default function Sidebar({ isOpen = false, closeSidebar }) {
+  const role = useSession()?.user?.role;
+  const navItems = getVisibleAdminNavItems(role);
+
   useEffect(() => {
     if (!isOpen) {
       return undefined;
@@ -53,7 +57,7 @@ export default function Sidebar({ isOpen = false, closeSidebar }) {
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-4" aria-label="מודולי ניהול">
-          {ADMIN_NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <SidebarNavItem
               key={item.href}
               href={item.href}

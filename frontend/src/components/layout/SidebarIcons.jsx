@@ -38,6 +38,16 @@ export function AttendanceIcon() {
   );
 }
 
+export function PrayerIcon() {
+  return (
+    <Icon>
+      <path d="M12 3v3" />
+      <path d="M5 21V10l7-5 7 5v11" />
+      <path d="M9 21v-6h6v6" />
+    </Icon>
+  );
+}
+
 export function PhonesIcon() {
   return (
     <Icon>
@@ -95,6 +105,7 @@ export const SIDEBAR_ICONS = {
   dashboard: DashboardIcon,
   users: UsersIcon,
   attendance: AttendanceIcon,
+  prayer: PrayerIcon,
   phones: PhonesIcon,
   leaves: LeavesIcon,
   messages: MessagesIcon,
