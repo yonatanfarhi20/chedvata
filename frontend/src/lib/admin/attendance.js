@@ -96,6 +96,34 @@ export function createDefaultAttendanceList(students) {
   }));
 }
 
+export function summarizePrayerAttendance(attendanceList) {
+  return attendanceList.reduce(
+    (summary, item) => {
+      if (item.status === ATTENDANCE_STATUS.ABSENT) {
+        summary.absentCount += 1;
+      } else if (item.status === ATTENDANCE_STATUS.LATE) {
+        summary.lateCount += 1;
+      } else {
+        summary.presentCount += 1;
+      }
+
+      return summary;
+    },
+    { presentCount: 0, absentCount: 0, lateCount: 0 },
+  );
+}
+
+export function buildPrayerAttendancePayload(attendanceList, date = getTodayDateInputValue()) {
+  return {
+    date,
+    activityType: ACTIVITY_TYPE.PRAYER,
+    records: attendanceList.map((item) => ({
+      studentId: item.studentId,
+      status: item.status || ATTENDANCE_STATUS.PRESENT,
+    })),
+  };
+}
+
 export function applyExistingAttendanceRecords(attendanceList, records) {
   const recordsByStudentId = new Map(
     records.map((record) => [getAttendanceRecordStudentId(record), record.status]),
