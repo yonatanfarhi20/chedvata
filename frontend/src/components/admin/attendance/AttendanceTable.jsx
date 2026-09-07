@@ -4,12 +4,12 @@ import {
 } from '@/lib/admin/attendance';
 import { formatClassAffiliation, getUserFullName } from '@/lib/admin/users';
 
-function AttendanceStatusRadios({ studentId, value, disabled, onChange }) {
+function AttendanceStatusRadios({ studentId, value, disabled, onChange, statusOptions }) {
   return (
     <fieldset className="min-w-[22rem]">
       <legend className="sr-only">סטטוס נוכחות</legend>
       <div className="flex flex-wrap gap-2">
-        {ATTENDANCE_STATUS_OPTIONS.map((option) => {
+        {statusOptions.map((option) => {
           const isSelected = value === option.value;
 
           return (
@@ -42,6 +42,7 @@ export default function AttendanceTable({
   statuses,
   disabled = false,
   onStatusChange,
+  statusOptions = ATTENDANCE_STATUS_OPTIONS,
 }) {
   if (students.length === 0) {
     return (
@@ -76,6 +77,7 @@ export default function AttendanceTable({
                     studentId={student._id}
                     value={status}
                     disabled={disabled}
+                    statusOptions={statusOptions}
                     onChange={onStatusChange}
                   />
                 </td>
