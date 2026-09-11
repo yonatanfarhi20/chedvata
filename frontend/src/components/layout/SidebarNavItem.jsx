@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { isAdminNavActive } from '@/lib/admin/nav';
 import { SIDEBAR_ICONS } from '@/components/layout/SidebarIcons';
+import { isNavItemActive } from '@/lib/nav';
 
 export default function SidebarNavItem({ href, label, icon, onNavigate }) {
   const pathname = usePathname();
-  const active = isAdminNavActive(pathname, href);
+  const active = isNavItemActive(pathname, href);
   const Icon = SIDEBAR_ICONS[icon];
 
   return (

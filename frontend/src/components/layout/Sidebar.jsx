@@ -6,9 +6,9 @@ import { CloseIcon } from '@/components/layout/SidebarIcons';
 import SidebarNavItem from '@/components/layout/SidebarNavItem';
 import { useSession } from '@/lib/auth/session';
 
-export default function Sidebar({ isOpen = false, closeSidebar }) {
+export default function Sidebar({ isOpen = false, closeSidebar, items }) {
   const role = useSession()?.user?.role;
-  const navItems = getVisibleAdminNavItems(role);
+  const navItems = items ?? getVisibleAdminNavItems(role);
 
   useEffect(() => {
     if (!isOpen) {
@@ -38,7 +38,7 @@ export default function Sidebar({ isOpen = false, closeSidebar }) {
       />
 
       <aside
-        id="admin-sidebar"
+        id="app-sidebar"
         className={`fixed inset-y-0 start-0 z-40 flex w-72 flex-col bg-primary text-white shadow-xl transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'max-lg:-translate-x-full max-lg:rtl:translate-x-full'
         }`}
@@ -56,7 +56,7 @@ export default function Sidebar({ isOpen = false, closeSidebar }) {
           </button>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-4" aria-label="מודולי ניהול">
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-4" aria-label="ניווט ראשי">
           {navItems.map((item) => (
             <SidebarNavItem
               key={item.href}

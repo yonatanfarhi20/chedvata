@@ -46,11 +46,11 @@ function ProfileAvatar({ user, initials }) {
   );
 }
 
-export default function TopbarProfile({ user }) {
+export default function TopbarProfile({ user, profileHref }) {
   const router = useRouter();
   const containerRef = useRef(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const fullName = getUserDisplayName(user) || 'מנהל';
+  const fullName = getUserDisplayName(user) || 'משתמש';
   const initials = getUserInitials(user);
 
   useEffect(() => {
@@ -116,15 +116,17 @@ export default function TopbarProfile({ user }) {
           aria-label="תפריט משתמש"
           className="absolute end-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border bg-card py-1 shadow-lg"
         >
-          <Link
-            href="/admin/profile"
-            role="menuitem"
-            onClick={() => setIsDropdownOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-background"
-          >
-            <UserIcon />
-            עריכת פרופיל
-          </Link>
+          {profileHref ? (
+            <Link
+              href={profileHref}
+              role="menuitem"
+              onClick={() => setIsDropdownOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-background"
+            >
+              <UserIcon />
+              עריכת פרופיל
+            </Link>
+          ) : null}
           <button
             type="button"
             role="menuitem"

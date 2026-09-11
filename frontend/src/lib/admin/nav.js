@@ -1,4 +1,5 @@
 import { SENIOR_MANAGEMENT_ROLES } from '@/lib/auth/constants';
+import { isNavItemActive } from '@/lib/nav';
 
 export const ADMIN_NAV_ITEMS = Object.freeze([
   { href: '/admin', label: 'דאשבורד', icon: 'dashboard' },
@@ -20,9 +21,5 @@ export function getVisibleAdminNavItems(role) {
 }
 
 export function isAdminNavActive(pathname, href) {
-  if (href === '/admin') {
-    return pathname === '/admin';
-  }
-
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return isNavItemActive(pathname, href);
 }
