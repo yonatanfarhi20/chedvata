@@ -1,12 +1,24 @@
+import { SENIOR_MANAGEMENT_ROLES } from '@/lib/auth/constants';
+
 export const MESSAGE_RECIPIENT_TYPE = Object.freeze({
   STUDENT: 'student',
   CLASS: 'class',
+  ALL: 'all',
 });
 
 export const MESSAGE_RECIPIENT_TYPE_LABELS = Object.freeze({
   [MESSAGE_RECIPIENT_TYPE.STUDENT]: 'תלמיד',
   [MESSAGE_RECIPIENT_TYPE.CLASS]: 'שיעור',
+  [MESSAGE_RECIPIENT_TYPE.ALL]: 'כל הישיבה',
 });
+
+export function getMessageRecipientTypes(role) {
+  if (SENIOR_MANAGEMENT_ROLES.includes(role)) {
+    return Object.values(MESSAGE_RECIPIENT_TYPE);
+  }
+
+  return [MESSAGE_RECIPIENT_TYPE.STUDENT, MESSAGE_RECIPIENT_TYPE.CLASS];
+}
 
 export function getUniqueClassIds(users = []) {
   const classIds = new Set();
@@ -40,4 +52,24 @@ export function validateMessageForm({ recipientType, studentId, classId, subject
   }
 
   return errors;
+}
+
+export function buildMessagePayload({ recipientType, studentId, classId, subject, content }) {
+  const payload = {
+    subject: subject.trim(),
+    content: content.trim(),
+  };
+
+  if (recipientType === MESSAGE_RECIPIENT_TYPE.ALL) {
+    payload.messageType = MESSAGE_RECIPIENT_TYPE.ALL;
+    return payload;
+  }
+
+  if (recipientType === MESSAGE_RECIPIENT_TYPE.STUDENT) {
+    payload.recipientId = studentId;
+    return payload;
+  }
+
+  payload.classId = classId;
+  return payload;
 }

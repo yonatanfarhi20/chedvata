@@ -9,6 +9,8 @@ import Spinner from '@/components/ui/Spinner';
 import TextField from '@/components/ui/TextField';
 import { formatClassAffiliation } from '@/lib/admin/users';
 import {
+  buildMessagePayload,
+  getMessageRecipientTypes,
   getUniqueClassIds,
   MESSAGE_RECIPIENT_TYPE,
   MESSAGE_RECIPIENT_TYPE_LABELS,
@@ -18,6 +20,7 @@ import { getStudentId } from '@/lib/admin/students';
 import { createMessage, getUsers } from '@/lib/api/admin';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 import { USER_ROLE, USER_STATUS } from '@/lib/auth/constants';
+import { useSession } from '@/lib/auth/session';
 
 const INITIAL_VALUES = {
   recipientType: MESSAGE_RECIPIENT_TYPE.STUDENT,
@@ -31,6 +34,8 @@ function isActiveStudent(user) {
 }
 
 export default function AdminMessagingForm({ onSuccess, onError }) {
+  const role = useSession()?.user?.role;
+  const recipientTypes = getMessageRecipientTypes(role);
   const [values, setValues] = useState(INITIAL_VALUES);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [errors, setErrors] = useState({});
@@ -157,13 +162,13 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
 
     setIsSubmitting(true);
 
-    const payload = {
-      subject: values.subject.trim(),
-      content: values.content.trim(),
-      ...(values.recipientType === MESSAGE_RECIPIENT_TYPE.STUDENT
-        ? { recipientId: getStudentId(selectedStudent) }
-        : { classId: values.classId }),
-    };
+    const payload = buildMessagePayload({
+      recipientType: values.recipientType,
+      studentId: getStudentId(selectedStudent),
+      classId: values.classId,
+      subject: values.subject,
+      content: values.content,
+    });
 
     try {
       const data = await createMessage(payload);
@@ -208,7 +213,7 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
         disabled={isBusy}
         required
       >
-        {Object.values(MESSAGE_RECIPIENT_TYPE).map((type) => (
+        {recipientTypes.map((type) => (
           <option key={type} value={type}>
             {MESSAGE_RECIPIENT_TYPE_LABELS[type]}
           </option>
@@ -224,7 +229,9 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
           disabled={isBusy}
           required
         />
-      ) : (
+      ) : null}
+
+      {values.recipientType === MESSAGE_RECIPIENT_TYPE.CLASS ? (
         <div className="flex flex-col gap-3">
           {loadError ? (
             <div className="flex flex-col items-start gap-3">
@@ -254,7 +261,7 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
             disabled={isBusy || isLoadingClasses || Boolean(loadError)}
             required
           >
-            <option value="">{isLoadingClasses ? ' טוען שיעורים...' : 'בחרו שיעור'}</option>
+            <option value="">{isLoadingClasses ? 'טוען שיעורים...' : 'בחרו שיעור'}</option>
             {classOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -262,7 +269,13 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
             ))}
           </SelectField>
         </div>
-      )}
+      ) : null}
+
+      {values.recipientType === MESSAGE_RECIPIENT_TYPE.ALL ? (
+        <p className="rounded-lg bg-background px-3 py-2 text-sm text-muted">
+          ההודעה תישלח לכל באי הישיבה — צוות ותלמידים.
+        </p>
+      ) : null}
 
       <TextField
         id="message-subject"

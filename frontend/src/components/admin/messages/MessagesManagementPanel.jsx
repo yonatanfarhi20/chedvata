@@ -17,7 +17,7 @@ export default function MessagesManagementPanel() {
         <header className="mb-6 shrink-0">
           <h1 className="text-xl font-semibold text-foreground">הודעות</h1>
           <p className="mt-1 text-sm text-muted">
-            שלחו הודעה ממוקדת לתלמיד בודד או לשיעור שלם. ההודעה תופיע בתיבת הדואר של התלמיד.
+            שלחו הודעה לתלמיד, לשיעור, או לכל הישיבה. ההודעה תופיע אצל הנמענים בתיבת ההודעות.
           </p>
         </header>
 
