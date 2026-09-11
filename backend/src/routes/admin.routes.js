@@ -51,6 +51,7 @@ router.get('/phones/status', phoneController.getDailyStatus);
 router.post('/phones/deposit', phoneController.toggleDeposit);
 
 router.post('/leaves', leaveController.createLeave);
+router.get('/messages', messageController.listMessages);
 router.post('/messages', messageController.createMessage);
 
 module.exports = router;

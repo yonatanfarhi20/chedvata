@@ -3,6 +3,7 @@ const Message = require('../models/Message.model');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const { ERROR_MESSAGES } = require('../constants/errors');
+const { MESSAGE_TYPE } = require('../constants/messages');
 const { USER_ROLE, USER_STATUS } = require('../constants/user');
 const {
   LEAVE_NOTIFICATION_SUBJECT,
@@ -29,6 +30,7 @@ async function notifyStudentOfLeave(leave, { senderId, student } = {}) {
     await Message.create({
       senderId,
       recipientId: student._id,
+      messageType: MESSAGE_TYPE.PERSONAL,
       subject: LEAVE_NOTIFICATION_SUBJECT,
       content: buildLeaveNotificationContent(leave),
     });

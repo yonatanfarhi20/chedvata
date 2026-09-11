@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { MESSAGE_TYPE } = require('../constants/messages');
 
 const messageSchema = new mongoose.Schema(
   {
@@ -13,6 +14,10 @@ const messageSchema = new mongoose.Schema(
     },
     classId: {
       type: mongoose.Schema.Types.ObjectId,
+    },
+    messageType: {
+      type: String,
+      enum: Object.values(MESSAGE_TYPE),
     },
     subject: {
       type: String,
@@ -37,6 +42,7 @@ const messageSchema = new mongoose.Schema(
 messageSchema.index({ recipientId: 1, createdAt: -1 });
 messageSchema.index({ classId: 1, createdAt: -1 });
 messageSchema.index({ senderId: 1, createdAt: -1 });
+messageSchema.index({ messageType: 1, createdAt: -1 });
 
 const Message = mongoose.model('Message', messageSchema);
 

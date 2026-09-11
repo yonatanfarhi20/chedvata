@@ -49,6 +49,9 @@ const ERROR_MESSAGES = Object.freeze({
   INVALID_LEAVE_RANGE: 'תאריך הסיום חייב להיות באותו יום או אחרי תאריך ההתחלה',
   LEAVE_CREATED: 'החופשה נוספה בהצלחה',
   MESSAGE_RECIPIENT_REQUIRED: 'יש לבחור תלמיד או כיתה לשליחת ההודעה',
+  INVALID_MESSAGE_TYPE: 'סוג ההודעה אינו תקין',
+  MESSAGE_BROADCAST_FORBIDDEN: 'אין הרשאה לשלוח הודעה לכלל הישיבה',
+  MESSAGE_NOT_IN_RABBI_CLASS: 'ניתן לשלוח הודעה רק לשיעור שלך או לתלמיד שמשתייך אליו',
   MESSAGE_SENT: 'ההודעה נשלחה בהצלחה',
   STUDENT_NOT_IN_SYSTEM: 'תלמיד זה אינו מופיע במערכת',
 });

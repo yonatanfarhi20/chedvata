@@ -66,7 +66,7 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
         }
 
         setClassIds([]);
-        setLoadError(getErrorMessage(error, 'לא ניתן לטעון את רשימת הכיתות.'));
+        setLoadError(getErrorMessage(error, 'לא ניתן לטעון את רשימת השיעורים.'));
       } finally {
         if (requestId === loadRequestIdRef.current) {
           setIsLoadingClasses(false);
@@ -247,14 +247,14 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
           <SelectField
             id="message-class"
             name="classId"
-            label="כיתה"
+            label="שיעור"
             value={values.classId}
             onChange={handleChange}
             error={errors.classId}
             disabled={isBusy || isLoadingClasses || Boolean(loadError)}
             required
           >
-            <option value="">{isLoadingClasses ? 'טוען כיתות...' : 'בחרו כיתה'}</option>
+            <option value="">{isLoadingClasses ? ' טוען שיעורים...' : 'בחרו שיעור'}</option>
             {classOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}

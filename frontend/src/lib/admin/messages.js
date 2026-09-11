@@ -4,8 +4,8 @@ export const MESSAGE_RECIPIENT_TYPE = Object.freeze({
 });
 
 export const MESSAGE_RECIPIENT_TYPE_LABELS = Object.freeze({
-  [MESSAGE_RECIPIENT_TYPE.STUDENT]: 'תלמיד ספציפי',
-  [MESSAGE_RECIPIENT_TYPE.CLASS]: 'שיעור / כיתה',
+  [MESSAGE_RECIPIENT_TYPE.STUDENT]: 'תלמיד',
+  [MESSAGE_RECIPIENT_TYPE.CLASS]: 'שיעור',
 });
 
 export function getUniqueClassIds(users = []) {
@@ -28,7 +28,7 @@ export function validateMessageForm({ recipientType, studentId, classId, subject
   }
 
   if (recipientType === MESSAGE_RECIPIENT_TYPE.CLASS && !classId) {
-    errors.classId = 'יש לבחור כיתה';
+    errors.classId = 'יש לבחור שיעור';
   }
 
   if (!subject?.trim()) {
