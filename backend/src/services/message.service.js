@@ -18,9 +18,18 @@ function isSameClassId(left, right) {
 function buildInboxQuery(user) {
   const clauses = [{ recipientId: user._id }, { messageType: MESSAGE_TYPE.ALL }];
   const classId = getUserClassId(user);
+  const isSeniorManager = SENIOR_MANAGEMENT_ROLES.includes(user.role);
 
   if (classId) {
     clauses.push({ classId });
+  }
+
+  if (user.role === USER_ROLE.RABBI || isSeniorManager) {
+    clauses.push({ senderId: user._id });
+  }
+
+  if (isSeniorManager) {
+    clauses.push({ messageType: MESSAGE_TYPE.CLASS });
   }
 
   return { $or: clauses };

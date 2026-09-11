@@ -6,6 +6,6 @@ export const metadata = {
 
 export default function RabbiMessagesPage() {
   return (
-    <MessagesManagementPanel description="שלחו הודעה לתלמיד בשיעור שלכם, או לכל השיעור." />
+    <MessagesManagementPanel description="הודעות השיעור והודעות המערכת. לחצו על הפלוס כדי לשלוח הודעה." />
   );
 }

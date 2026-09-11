@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button';
 import SelectField from '@/components/ui/SelectField';
 import Spinner from '@/components/ui/Spinner';
 import TextField from '@/components/ui/TextField';
-import { formatClassAffiliation } from '@/lib/admin/users';
+import { formatClassAffiliation, getRabbis } from '@/lib/admin/users';
 import {
   buildMessagePayload,
   getLockedClassId,
@@ -34,7 +34,7 @@ function isActiveStudent(user) {
   return user?.role === USER_ROLE.STUDENT && user?.status === USER_STATUS.ACTIVE;
 }
 
-export default function AdminMessagingForm({ onSuccess, onError }) {
+export default function AdminMessagingForm({ onSuccess, onError, className = '' }) {
   const user = useSession()?.user;
   const role = user?.role;
   const isRabbi = role === USER_ROLE.RABBI;
@@ -45,6 +45,7 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [errors, setErrors] = useState({});
   const [classIds, setClassIds] = useState([]);
+  const [rabbis, setRabbis] = useState([]);
   const [isLoadingClasses, setIsLoadingClasses] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,6 +56,7 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
     if (isRabbi) {
       setIsLoadingClasses(false);
       setClassIds([]);
+      setRabbis([]);
       setLoadError('');
       return undefined;
     }
@@ -72,6 +74,7 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
 
         const users = Array.isArray(data?.users) ? data.users : [];
         setClassIds(getUniqueClassIds(users.filter(isActiveStudent)));
+        setRabbis(getRabbis(users));
         setLoadError('');
       } catch (error) {
         if (requestId !== loadRequestIdRef.current) {
@@ -83,6 +86,7 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
         }
 
         setClassIds([]);
+        setRabbis([]);
         setLoadError(getErrorMessage(error, 'לא ניתן לטעון את רשימת השיעורים.'));
       } finally {
         if (requestId === loadRequestIdRef.current) {
@@ -99,8 +103,14 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
   }, [reloadKey, isRabbi]);
 
   const classOptions = useMemo(
-    () => classIds.map((classId) => ({ value: classId, label: formatClassAffiliation(classId) })),
-    [classIds],
+    () =>
+      classIds
+        .map((classId) => ({
+          value: classId,
+          label: formatClassAffiliation(classId, rabbis),
+        }))
+        .sort((left, right) => left.label.localeCompare(right.label, 'he')),
+    [classIds, rabbis],
   );
 
   function clearFieldError(name) {
@@ -223,7 +233,7 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
     <form
       onSubmit={handleSubmit}
       noValidate
-      className="flex flex-col gap-5 rounded-xl border border-border bg-card p-5 shadow-sm md:p-6"
+      className={`flex flex-col gap-5 ${className}`.trim()}
       aria-busy={isSubmitting}
     >
       <SelectField
