@@ -12,6 +12,7 @@ const {
   parseAdminUpdateUserPayload,
 } = require('../validators/adminUser');
 const { escapeRegex } = require('../utils/regex');
+const { getUserClassId } = require('../utils/userClass');
 
 const STUDENT_SEARCH_LIMIT = 20;
 const STUDENT_SEARCH_MAX_LENGTH = 100;
@@ -216,36 +217,56 @@ async function deleteUser(rawId, { actorId } = {}) {
   return deletedUser;
 }
 
-async function searchStudents(query = {}) {
+function buildStudentSearchFilter(rawName, actor) {
+  const escaped = escapeRegex(rawName.slice(0, STUDENT_SEARCH_MAX_LENGTH));
+  const nameRegex = new RegExp(escaped, 'i');
+  const filter = {
+    role: USER_ROLE.STUDENT,
+    $or: [
+      { firstName: nameRegex },
+      { lastName: nameRegex },
+      {
+        $expr: {
+          $regexMatch: {
+            input: { $concat: ['$firstName', ' ', '$lastName'] },
+            regex: escaped,
+            options: 'i',
+          },
+        },
+      },
+    ],
+  };
+
+  if (actor?.role === USER_ROLE.RABBI) {
+    const classId = getUserClassId(actor);
+
+    if (!classId) {
+      return null;
+    }
+
+    filter.classId = classId;
+  }
+
+  return filter;
+}
+
+async function searchStudents(query = {}, { actor } = {}) {
   const rawName = typeof query.name === 'string' ? query.name.trim() : '';
 
   if (!rawName) {
     throw studentNotFoundError();
   }
 
-  const escaped = escapeRegex(rawName.slice(0, STUDENT_SEARCH_MAX_LENGTH));
+  const filter = buildStudentSearchFilter(rawName, actor);
+
+  if (!filter) {
+    throw studentNotFoundError();
+  }
 
   let users;
 
   try {
-    const nameRegex = new RegExp(escaped, 'i');
-
-    users = await User.find({
-      role: USER_ROLE.STUDENT,
-      $or: [
-        { firstName: nameRegex },
-        { lastName: nameRegex },
-        {
-          $expr: {
-            $regexMatch: {
-              input: { $concat: ['$firstName', ' ', '$lastName'] },
-              regex: escaped,
-              options: 'i',
-            },
-          },
-        },
-      ],
-    })
+    users = await User.find(filter)
       .select('firstName lastName profileImage classId idNumber')
       .sort({ lastName: 1, firstName: 1, createdAt: 1 })
       .limit(STUDENT_SEARCH_LIMIT);

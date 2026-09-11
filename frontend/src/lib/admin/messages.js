@@ -1,4 +1,4 @@
-import { SENIOR_MANAGEMENT_ROLES } from '@/lib/auth/constants';
+import { SENIOR_MANAGEMENT_ROLES, USER_ROLE } from '@/lib/auth/constants';
 
 export const MESSAGE_RECIPIENT_TYPE = Object.freeze({
   STUDENT: 'student',
@@ -12,12 +12,37 @@ export const MESSAGE_RECIPIENT_TYPE_LABELS = Object.freeze({
   [MESSAGE_RECIPIENT_TYPE.ALL]: 'כל הישיבה',
 });
 
+export const RABBI_MESSAGE_RECIPIENT_TYPE_LABELS = Object.freeze({
+  [MESSAGE_RECIPIENT_TYPE.STUDENT]: 'תלמיד',
+  [MESSAGE_RECIPIENT_TYPE.CLASS]: 'כל השיעור',
+});
+
 export function getMessageRecipientTypes(role) {
   if (SENIOR_MANAGEMENT_ROLES.includes(role)) {
     return Object.values(MESSAGE_RECIPIENT_TYPE);
   }
 
   return [MESSAGE_RECIPIENT_TYPE.STUDENT, MESSAGE_RECIPIENT_TYPE.CLASS];
+}
+
+export function getMessageRecipientTypeLabels(role) {
+  if (role === USER_ROLE.RABBI) {
+    return RABBI_MESSAGE_RECIPIENT_TYPE_LABELS;
+  }
+
+  return MESSAGE_RECIPIENT_TYPE_LABELS;
+}
+
+export function getLockedClassId(user) {
+  if (user?.role !== USER_ROLE.RABBI) {
+    return '';
+  }
+
+  if (user.classId) {
+    return String(user.classId);
+  }
+
+  return user?._id ? String(user._id) : '';
 }
 
 export function getUniqueClassIds(users = []) {

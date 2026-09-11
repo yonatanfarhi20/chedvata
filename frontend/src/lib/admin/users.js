@@ -17,9 +17,62 @@ export function getUserFullName(user) {
   return `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
 }
 
-export function formatClassAffiliation(classId) {
+export function getUserId(user) {
+  return user?._id ? String(user._id) : '';
+}
+
+export function getRabbis(users = []) {
+  return users
+    .filter((user) => user?.role === USER_ROLE.RABBI && user?.status === USER_STATUS.ACTIVE)
+    .sort((left, right) => getUserFullName(left).localeCompare(getUserFullName(right), 'he'));
+}
+
+export function getRabbiClassId(rabbi) {
+  if (rabbi?.classId) {
+    return String(rabbi.classId);
+  }
+
+  return getUserId(rabbi);
+}
+
+export function findRabbiByClassId(classId, rabbis = []) {
+  const normalized = String(classId || '');
+
+  if (!normalized) {
+    return null;
+  }
+
+  return (
+    rabbis.find((rabbi) => getUserId(rabbi) === normalized || String(rabbi.classId || '') === normalized) ||
+    null
+  );
+}
+
+export function getRabbiSelectValue(classId, rabbis = []) {
+  const rabbi = findRabbiByClassId(classId, rabbis);
+  return rabbi ? getUserId(rabbi) : String(classId || '');
+}
+
+export function resolveClassIdFromRabbiSelection(selectedRabbiId, rabbis = []) {
+  const rabbiId = String(selectedRabbiId || '').trim();
+
+  if (!rabbiId) {
+    return '';
+  }
+
+  const rabbi = rabbis.find((item) => getUserId(item) === rabbiId);
+  return rabbi ? getRabbiClassId(rabbi) : rabbiId;
+}
+
+export function formatClassAffiliation(classId, rabbis = []) {
   if (!classId) {
     return '—';
+  }
+
+  const rabbi = findRabbiByClassId(classId, rabbis);
+
+  if (rabbi) {
+    return getUserFullName(rabbi);
   }
 
   return String(classId);

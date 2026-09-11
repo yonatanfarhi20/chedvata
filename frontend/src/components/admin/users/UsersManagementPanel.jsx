@@ -8,7 +8,7 @@ import UsersTableToolbar from '@/components/admin/users/UsersTableToolbar';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import Toast from '@/components/ui/Toast';
-import { matchesUserSearch } from '@/lib/admin/users';
+import { getRabbis, matchesUserSearch } from '@/lib/admin/users';
 import { deleteUser, getUsers } from '@/lib/api/admin';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 
@@ -134,6 +134,7 @@ export default function UsersManagementPanel() {
     await loadUsers({ silent: true });
   }
 
+  const rabbis = useMemo(() => getRabbis(users), [users]);
   const hasSearch = searchQuery.trim().length > 0;
 
   return (
@@ -173,6 +174,7 @@ export default function UsersManagementPanel() {
         {!isLoading && filteredUsers.length > 0 ? (
           <UsersTable
             users={filteredUsers}
+            rabbis={rabbis}
             onEdit={handleEditUser}
             onDelete={handleDeleteUser}
             actionsDisabled={isDeleting}
@@ -183,6 +185,7 @@ export default function UsersManagementPanel() {
       <UserFormModal
         isOpen={isFormOpen}
         user={selectedUser}
+        users={users}
         onClose={handleCloseForm}
         onSaved={handleUserSaved}
       />

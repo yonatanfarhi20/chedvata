@@ -32,7 +32,7 @@ async function listUsers(_req, res) {
 }
 
 async function searchStudents(req, res) {
-  const users = await adminService.searchStudents(req.query);
+  const users = await adminService.searchStudents(req.query, { actor: req.user });
 
   return res.status(200).json({ users });
 }

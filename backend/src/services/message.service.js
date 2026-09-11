@@ -5,6 +5,7 @@ const { ERROR_MESSAGES } = require('../constants/errors');
 const { MESSAGE_TYPE } = require('../constants/messages');
 const { USER_ROLE, USER_STATUS, SENIOR_MANAGEMENT_ROLES } = require('../constants/user');
 const { parseMessagePayload } = require('../validators/messages');
+const { getUserClassId } = require('../utils/userClass');
 
 function isSameClassId(left, right) {
   if (!left || !right) {
@@ -16,9 +17,10 @@ function isSameClassId(left, right) {
 
 function buildInboxQuery(user) {
   const clauses = [{ recipientId: user._id }, { messageType: MESSAGE_TYPE.ALL }];
+  const classId = getUserClassId(user);
 
-  if (user.classId) {
-    clauses.push({ classId: user.classId });
+  if (classId) {
+    clauses.push({ classId });
   }
 
   return { $or: clauses };
@@ -67,15 +69,17 @@ function assertRabbiCanSend(sender, data, recipient) {
     throw new AppError(ERROR_MESSAGES.MESSAGE_BROADCAST_FORBIDDEN, 403);
   }
 
-  if (!sender.classId) {
+  const rabbiClassId = getUserClassId(sender);
+
+  if (!rabbiClassId) {
     throw new AppError(ERROR_MESSAGES.MESSAGE_NOT_IN_RABBI_CLASS, 403);
   }
 
-  if (data.classId && !isSameClassId(data.classId, sender.classId)) {
+  if (data.classId && !isSameClassId(data.classId, rabbiClassId)) {
     throw new AppError(ERROR_MESSAGES.MESSAGE_NOT_IN_RABBI_CLASS, 403);
   }
 
-  if (recipient && !isSameClassId(recipient.classId, sender.classId)) {
+  if (recipient && !isSameClassId(recipient.classId, rabbiClassId)) {
     throw new AppError(ERROR_MESSAGES.MESSAGE_NOT_IN_RABBI_CLASS, 403);
   }
 }

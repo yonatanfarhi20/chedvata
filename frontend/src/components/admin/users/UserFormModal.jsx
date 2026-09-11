@@ -7,7 +7,7 @@ import Modal from '@/components/ui/Modal';
 import SelectField from '@/components/ui/SelectField';
 import Spinner from '@/components/ui/Spinner';
 import TextField from '@/components/ui/TextField';
-import { USER_ROLE_LABELS } from '@/lib/admin/users';
+import { USER_ROLE_LABELS, getRabbis, getRabbiSelectValue, findRabbiByClassId, getUserFullName, resolveClassIdFromRabbiSelection } from '@/lib/admin/users';
 import { createUser, updateUser } from '@/lib/api/admin';
 import { ApiError } from '@/lib/api/client';
 import { USER_ROLE } from '@/lib/auth/constants';
@@ -33,8 +33,9 @@ function mapServerErrors(error) {
   return null;
 }
 
-export default function UserFormModal({ isOpen, onClose, user = null, onSaved }) {
+export default function UserFormModal({ isOpen, onClose, user = null, users = [], onSaved }) {
   const isEdit = Boolean(user);
+  const rabbis = getRabbis(users);
   const [values, setValues] = useState(() => getAdminUserFormValues(user));
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -106,7 +107,13 @@ export default function UserFormModal({ isOpen, onClose, user = null, onSaved })
     setIsSubmitting(true);
 
     try {
-      const payload = toAdminUserPayload(values, { isEdit });
+      const payload = toAdminUserPayload(
+        {
+          ...values,
+          classId: isEdit ? resolveClassIdFromRabbiSelection(values.classId, rabbis) : values.classId,
+        },
+        { isEdit },
+      );
       const data = isEdit ? await updateUser(user._id, payload) : await createUser(payload);
       onSaved?.(data?.message || (isEdit ? 'פרטי המשתמש עודכנו בהצלחה' : 'המשתמש נוסף בהצלחה'));
       onClose?.();
@@ -211,18 +218,43 @@ export default function UserFormModal({ isOpen, onClose, user = null, onSaved })
           ))}
         </SelectField>
 
-        <TextField
-          name="classId"
-          label="שיוך כיתתי"
-          type="text"
-          autoComplete="off"
-          dir="ltr"
-          disabled={isSubmitting}
-          value={values.classId}
-          error={errors.classId}
-          onChange={handleChange}
-          onBlur={handleBlur}
-        />
+        {isEdit ? (
+          <div className="flex flex-col gap-1.5">
+            <SelectField
+              name="classId"
+              label="שיוך כיתתי"
+              disabled={isSubmitting}
+              value={getRabbiSelectValue(values.classId, rabbis)}
+              error={errors.classId}
+              onChange={handleChange}
+              onBlur={handleBlur}
+            >
+              <option value="">ללא שיוך</option>
+              {rabbis.map((rabbi) => (
+                <option key={String(rabbi._id)} value={String(rabbi._id)}>
+                  {getUserFullName(rabbi)}
+                </option>
+              ))}
+              {values.classId && !findRabbiByClassId(values.classId, rabbis) ? (
+                <option value={values.classId}>שיוך קיים שאינו משויך לרב</option>
+              ) : null}
+            </SelectField>
+            <p className="-mt-1 text-xs text-muted">בחרו את הרב של השיעור.</p>
+          </div>
+        ) : (
+          <TextField
+            name="classId"
+            label="שיוך כיתתי"
+            type="text"
+            autoComplete="off"
+            dir="ltr"
+            disabled={isSubmitting}
+            value={values.classId}
+            error={errors.classId}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
+        )}
 
         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
           <Button
