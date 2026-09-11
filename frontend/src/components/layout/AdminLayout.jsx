@@ -1,29 +1,20 @@
 'use client';
 
-import RequireAuth from '@/components/auth/RequireAuth';
-import Sidebar from '@/components/layout/Sidebar';
-import Topbar from '@/components/layout/Topbar';
-import { useAdminSidebar } from '@/components/layout/useAdminSidebar';
+import AppShell from '@/components/layout/AppShell';
+import { getVisibleAdminNavItems } from '@/lib/admin/nav';
 import { ADMIN_ROLES } from '@/lib/auth/constants';
+import { useSession } from '@/lib/auth/session';
 
 export default function AdminLayout({ children }) {
-  const { isSidebarOpen, closeSidebar, toggleSidebar } = useAdminSidebar();
+  const role = useSession()?.user?.role;
 
   return (
-    <RequireAuth allowedRoles={[...ADMIN_ROLES]}>
-      <div className="h-dvh max-h-dvh overflow-hidden bg-background">
-        <Sidebar isOpen={isSidebarOpen} closeSidebar={closeSidebar} />
-        <div className="flex h-full min-h-0 flex-col lg:ms-72">
-          <Topbar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-          <main
-            className={`min-h-0 flex-1 overscroll-y-contain ${
-              isSidebarOpen ? 'overflow-hidden lg:overflow-y-auto' : 'overflow-y-auto'
-            }`}
-          >
-            {children}
-          </main>
-        </div>
-      </div>
-    </RequireAuth>
+    <AppShell
+      allowedRoles={[...ADMIN_ROLES]}
+      navItems={getVisibleAdminNavItems(role)}
+      profileHref="/admin/profile"
+    >
+      {children}
+    </AppShell>
   );
 }

@@ -7,17 +7,21 @@ import Button from '@/components/ui/Button';
 import SelectField from '@/components/ui/SelectField';
 import Spinner from '@/components/ui/Spinner';
 import TextField from '@/components/ui/TextField';
-import { formatClassAffiliation } from '@/lib/admin/users';
+import { formatClassAffiliation, getRabbis } from '@/lib/admin/users';
 import {
+  buildMessagePayload,
+  getLockedClassId,
+  getMessageRecipientTypeLabels,
+  getMessageRecipientTypes,
   getUniqueClassIds,
   MESSAGE_RECIPIENT_TYPE,
-  MESSAGE_RECIPIENT_TYPE_LABELS,
   validateMessageForm,
 } from '@/lib/admin/messages';
 import { getStudentId } from '@/lib/admin/students';
 import { createMessage, getUsers } from '@/lib/api/admin';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 import { USER_ROLE, USER_STATUS } from '@/lib/auth/constants';
+import { useSession } from '@/lib/auth/session';
 
 const INITIAL_VALUES = {
   recipientType: MESSAGE_RECIPIENT_TYPE.STUDENT,
@@ -30,11 +34,18 @@ function isActiveStudent(user) {
   return user?.role === USER_ROLE.STUDENT && user?.status === USER_STATUS.ACTIVE;
 }
 
-export default function AdminMessagingForm({ onSuccess, onError }) {
+export default function AdminMessagingForm({ onSuccess, onError, className = '' }) {
+  const user = useSession()?.user;
+  const role = user?.role;
+  const isRabbi = role === USER_ROLE.RABBI;
+  const lockedClassId = getLockedClassId(user);
+  const recipientTypes = getMessageRecipientTypes(role);
+  const recipientTypeLabels = getMessageRecipientTypeLabels(role);
   const [values, setValues] = useState(INITIAL_VALUES);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [errors, setErrors] = useState({});
   const [classIds, setClassIds] = useState([]);
+  const [rabbis, setRabbis] = useState([]);
   const [isLoadingClasses, setIsLoadingClasses] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,6 +53,14 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
   const loadRequestIdRef = useRef(0);
 
   useEffect(() => {
+    if (isRabbi) {
+      setIsLoadingClasses(false);
+      setClassIds([]);
+      setRabbis([]);
+      setLoadError('');
+      return undefined;
+    }
+
     const requestId = loadRequestIdRef.current + 1;
     loadRequestIdRef.current = requestId;
 
@@ -55,6 +74,7 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
 
         const users = Array.isArray(data?.users) ? data.users : [];
         setClassIds(getUniqueClassIds(users.filter(isActiveStudent)));
+        setRabbis(getRabbis(users));
         setLoadError('');
       } catch (error) {
         if (requestId !== loadRequestIdRef.current) {
@@ -66,7 +86,8 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
         }
 
         setClassIds([]);
-        setLoadError(getErrorMessage(error, 'לא ניתן לטעון את רשימת הכיתות.'));
+        setRabbis([]);
+        setLoadError(getErrorMessage(error, 'לא ניתן לטעון את רשימת השיעורים.'));
       } finally {
         if (requestId === loadRequestIdRef.current) {
           setIsLoadingClasses(false);
@@ -79,11 +100,17 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
     return () => {
       loadRequestIdRef.current += 1;
     };
-  }, [reloadKey]);
+  }, [reloadKey, isRabbi]);
 
   const classOptions = useMemo(
-    () => classIds.map((classId) => ({ value: classId, label: formatClassAffiliation(classId) })),
-    [classIds],
+    () =>
+      classIds
+        .map((classId) => ({
+          value: classId,
+          label: formatClassAffiliation(classId, rabbis),
+        }))
+        .sort((left, right) => left.label.localeCompare(right.label, 'he')),
+    [classIds, rabbis],
   );
 
   function clearFieldError(name) {
@@ -109,7 +136,8 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
     setValues((current) => ({
       ...current,
       recipientType,
-      classId: recipientType === MESSAGE_RECIPIENT_TYPE.CLASS ? current.classId : '',
+      classId:
+        recipientType === MESSAGE_RECIPIENT_TYPE.CLASS ? lockedClassId || current.classId : '',
     }));
     setErrors((current) => {
       const next = { ...current };
@@ -141,13 +169,22 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
       return;
     }
 
+    const classId =
+      values.recipientType === MESSAGE_RECIPIENT_TYPE.CLASS
+        ? lockedClassId || values.classId
+        : values.classId;
+
     const nextErrors = validateMessageForm({
       recipientType: values.recipientType,
       studentId: getStudentId(selectedStudent),
-      classId: values.classId,
+      classId,
       subject: values.subject,
       content: values.content,
     });
+
+    if (isRabbi && values.recipientType === MESSAGE_RECIPIENT_TYPE.CLASS && !classId) {
+      nextErrors.classId = 'לא הוגדר שיעור לחשבון זה';
+    }
 
     setErrors(nextErrors);
 
@@ -157,13 +194,13 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
 
     setIsSubmitting(true);
 
-    const payload = {
-      subject: values.subject.trim(),
-      content: values.content.trim(),
-      ...(values.recipientType === MESSAGE_RECIPIENT_TYPE.STUDENT
-        ? { recipientId: getStudentId(selectedStudent) }
-        : { classId: values.classId }),
-    };
+    const payload = buildMessagePayload({
+      recipientType: values.recipientType,
+      studentId: getStudentId(selectedStudent),
+      classId,
+      subject: values.subject,
+      content: values.content,
+    });
 
     try {
       const data = await createMessage(payload);
@@ -196,7 +233,7 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
     <form
       onSubmit={handleSubmit}
       noValidate
-      className="flex flex-col gap-5 rounded-xl border border-border bg-card p-5 shadow-sm md:p-6"
+      className={`flex flex-col gap-5 ${className}`.trim()}
       aria-busy={isSubmitting}
     >
       <SelectField
@@ -208,9 +245,9 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
         disabled={isBusy}
         required
       >
-        {Object.values(MESSAGE_RECIPIENT_TYPE).map((type) => (
+        {recipientTypes.map((type) => (
           <option key={type} value={type}>
-            {MESSAGE_RECIPIENT_TYPE_LABELS[type]}
+            {recipientTypeLabels[type]}
           </option>
         ))}
       </SelectField>
@@ -224,45 +261,63 @@ export default function AdminMessagingForm({ onSuccess, onError }) {
           disabled={isBusy}
           required
         />
-      ) : (
-        <div className="flex flex-col gap-3">
-          {loadError ? (
-            <div className="flex flex-col items-start gap-3">
-              <Alert>{loadError}</Alert>
-              <Button
-                type="button"
-                variant="secondary"
-                fullWidth={false}
-                onClick={() => {
-                  setIsLoadingClasses(true);
-                  setLoadError('');
-                  setReloadKey((current) => current + 1);
-                }}
-              >
-                נסה שוב
-              </Button>
-            </div>
-          ) : null}
+      ) : null}
 
-          <SelectField
-            id="message-class"
-            name="classId"
-            label="כיתה"
-            value={values.classId}
-            onChange={handleChange}
-            error={errors.classId}
-            disabled={isBusy || isLoadingClasses || Boolean(loadError)}
-            required
-          >
-            <option value="">{isLoadingClasses ? 'טוען כיתות...' : 'בחרו כיתה'}</option>
-            {classOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </SelectField>
-        </div>
-      )}
+      {values.recipientType === MESSAGE_RECIPIENT_TYPE.CLASS ? (
+        isRabbi ? (
+          lockedClassId ? (
+            <p className="rounded-lg bg-background px-3 py-2 text-sm text-muted">
+              ההודעה תישלח לכל תלמידי השיעור שלך.
+            </p>
+          ) : (
+            <Alert>לא הוגדר שיעור לחשבון זה, לכן לא ניתן לשלוח לכל השיעור.</Alert>
+          )
+        ) : (
+          <div className="flex flex-col gap-3">
+            {loadError ? (
+              <div className="flex flex-col items-start gap-3">
+                <Alert>{loadError}</Alert>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  fullWidth={false}
+                  onClick={() => {
+                    setIsLoadingClasses(true);
+                    setLoadError('');
+                    setReloadKey((current) => current + 1);
+                  }}
+                >
+                  נסה שוב
+                </Button>
+              </div>
+            ) : null}
+
+            <SelectField
+              id="message-class"
+              name="classId"
+              label="שיעור"
+              value={values.classId}
+              onChange={handleChange}
+              error={errors.classId}
+              disabled={isBusy || isLoadingClasses || Boolean(loadError)}
+              required
+            >
+              <option value="">{isLoadingClasses ? 'טוען שיעורים...' : 'בחרו שיעור'}</option>
+              {classOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </SelectField>
+          </div>
+        )
+      ) : null}
+
+      {values.recipientType === MESSAGE_RECIPIENT_TYPE.ALL ? (
+        <p className="rounded-lg bg-background px-3 py-2 text-sm text-muted">
+          ההודעה תישלח לכל באי הישיבה — צוות ותלמידים.
+        </p>
+      ) : null}
 
       <TextField
         id="message-subject"

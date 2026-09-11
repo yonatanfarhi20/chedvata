@@ -6,7 +6,7 @@ import { MenuIcon } from '@/components/layout/TopbarIcons';
 import TopbarProfile from '@/components/layout/TopbarProfile';
 import TopbarSearch from '@/components/layout/TopbarSearch';
 
-export default function Topbar({ isSidebarOpen = false, toggleSidebar }) {
+export default function Topbar({ isSidebarOpen = false, toggleSidebar, profileHref }) {
   const user = useSession()?.user;
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -18,7 +18,7 @@ export default function Topbar({ isSidebarOpen = false, toggleSidebar }) {
           className="rounded-lg p-2 text-foreground transition-colors hover:bg-background lg:hidden"
           onClick={() => toggleSidebar?.()}
           aria-expanded={isSidebarOpen}
-          aria-controls="admin-sidebar"
+          aria-controls="app-sidebar"
           aria-label={isSidebarOpen ? 'סגור תפריט ניווט' : 'פתח תפריט ניווט'}
         >
           <MenuIcon />
@@ -32,7 +32,7 @@ export default function Topbar({ isSidebarOpen = false, toggleSidebar }) {
         </div>
 
         <div className="relative shrink-0">
-          <TopbarProfile user={user} />
+          <TopbarProfile user={user} profileHref={profileHref} />
         </div>
       </div>
     </header>

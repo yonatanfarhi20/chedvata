@@ -59,7 +59,7 @@ function StatusBadge({ status }) {
   );
 }
 
-export default function UsersTable({ users, onEdit, onDelete, actionsDisabled = false }) {
+export default function UsersTable({ users, rabbis = [], onEdit, onDelete, actionsDisabled = false }) {
   const [sort, setSort] = useState({ key: 'name', direction: 'asc' });
 
   const sortedUsers = useMemo(() => {
@@ -117,7 +117,7 @@ export default function UsersTable({ users, onEdit, onDelete, actionsDisabled = 
               <td className="px-4 py-3 font-mono text-foreground" dir="ltr">
                 {user.idNumber || '—'}
               </td>
-              <td className="px-4 py-3 text-foreground">{formatClassAffiliation(user.classId)}</td>
+              <td className="px-4 py-3 text-foreground">{formatClassAffiliation(user.classId, rabbis)}</td>
               <td className="px-4 py-3">
                 <StatusBadge status={user.status} />
               </td>

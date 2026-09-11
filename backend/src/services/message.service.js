@@ -2,19 +2,51 @@ const Message = require('../models/Message.model');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const { ERROR_MESSAGES } = require('../constants/errors');
-const { USER_ROLE, USER_STATUS } = require('../constants/user');
+const { MESSAGE_TYPE } = require('../constants/messages');
+const { USER_ROLE, USER_STATUS, SENIOR_MANAGEMENT_ROLES } = require('../constants/user');
 const { parseMessagePayload } = require('../validators/messages');
+const { getUserClassId } = require('../utils/userClass');
+
+function isSameClassId(left, right) {
+  if (!left || !right) {
+    return false;
+  }
+
+  return String(left) === String(right);
+}
+
+function buildInboxQuery(user) {
+  const clauses = [{ recipientId: user._id }, { messageType: MESSAGE_TYPE.ALL }];
+  const classId = getUserClassId(user);
+  const isSeniorManager = SENIOR_MANAGEMENT_ROLES.includes(user.role);
+
+  if (classId) {
+    clauses.push({ classId });
+  }
+
+  if (user.role === USER_ROLE.RABBI || isSeniorManager) {
+    clauses.push({ senderId: user._id });
+  }
+
+  if (isSeniorManager) {
+    clauses.push({ messageType: MESSAGE_TYPE.CLASS });
+  }
+
+  return { $or: clauses };
+}
 
 async function assertRecipientExists(recipientId) {
   const student = await User.findOne({
     _id: recipientId,
     role: USER_ROLE.STUDENT,
     status: USER_STATUS.ACTIVE,
-  }).select('_id');
+  }).select('_id classId');
 
   if (!student) {
     throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, 404);
   }
+
+  return student;
 }
 
 async function assertClassExists(classId) {
@@ -29,21 +61,73 @@ async function assertClassExists(classId) {
   }
 }
 
-async function createMessage(payload, { senderId } = {}) {
-  const data = parseMessagePayload(payload);
+function assertCanBroadcast(sender) {
+  if (SENIOR_MANAGEMENT_ROLES.includes(sender.role)) {
+    return;
+  }
 
-  if (data.recipientId) {
-    await assertRecipientExists(data.recipientId);
+  throw new AppError(ERROR_MESSAGES.MESSAGE_BROADCAST_FORBIDDEN, 403);
+}
+
+function assertRabbiCanSend(sender, data, recipient) {
+  if (sender.role !== USER_ROLE.RABBI) {
+    return;
+  }
+
+  if (data.messageType === MESSAGE_TYPE.ALL) {
+    throw new AppError(ERROR_MESSAGES.MESSAGE_BROADCAST_FORBIDDEN, 403);
+  }
+
+  const rabbiClassId = getUserClassId(sender);
+
+  if (!rabbiClassId) {
+    throw new AppError(ERROR_MESSAGES.MESSAGE_NOT_IN_RABBI_CLASS, 403);
+  }
+
+  if (data.classId && !isSameClassId(data.classId, rabbiClassId)) {
+    throw new AppError(ERROR_MESSAGES.MESSAGE_NOT_IN_RABBI_CLASS, 403);
+  }
+
+  if (recipient && !isSameClassId(recipient.classId, rabbiClassId)) {
+    throw new AppError(ERROR_MESSAGES.MESSAGE_NOT_IN_RABBI_CLASS, 403);
+  }
+}
+
+async function listMessages(user) {
+  if (!user?._id) {
+    throw new AppError(ERROR_MESSAGES.UNAUTHORIZED, 401);
+  }
+
+  return Message.find(buildInboxQuery(user))
+    .populate('senderId', 'firstName lastName role')
+    .sort({ createdAt: -1 });
+}
+
+async function createMessage(payload, sender) {
+  if (!sender?._id) {
+    throw new AppError(ERROR_MESSAGES.UNAUTHORIZED, 401);
+  }
+
+  const data = parseMessagePayload(payload);
+  let recipient;
+
+  if (data.messageType === MESSAGE_TYPE.ALL) {
+    assertCanBroadcast(sender);
+  } else if (data.recipientId) {
+    recipient = await assertRecipientExists(data.recipientId);
   } else if (data.classId) {
     await assertClassExists(data.classId);
   }
 
+  assertRabbiCanSend(sender, data, recipient);
+
   return Message.create({
     ...data,
-    senderId,
+    senderId: sender._id,
   });
 }
 
 module.exports = {
+  listMessages,
   createMessage,
 };
