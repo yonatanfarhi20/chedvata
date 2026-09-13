@@ -6,6 +6,7 @@ const dashboardController = require('../controllers/dashboard.controller');
 const leaveController = require('../controllers/leave.controller');
 const messageController = require('../controllers/message.controller');
 const phoneController = require('../controllers/phone.controller');
+const phonePenaltyController = require('../controllers/phonePenalty.controller');
 const profileController = require('../controllers/profile.controller');
 const verifyAdmin = require('../middlewares/verifyAdmin.middleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
@@ -71,6 +72,22 @@ router.put(
 
 router.get('/phones/status', phoneController.getDailyStatus);
 router.post('/phones/deposit', phoneController.toggleDeposit);
+
+router.get(
+  '/phone-penalties',
+  roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
+  phonePenaltyController.listPhonePenaltyQueues,
+);
+router.post(
+  '/phone-penalties/:studentId/deposit',
+  roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
+  phonePenaltyController.confirmPhoneDeposit,
+);
+router.post(
+  '/phone-penalties/:studentId/return',
+  roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
+  phonePenaltyController.confirmPhoneReturn,
+);
 
 router.post('/leaves', leaveController.createLeave);
 router.get('/messages', messageController.listMessages);
