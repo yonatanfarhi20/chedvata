@@ -3,6 +3,7 @@ import {
   PRAYER_ATTENDANCE_STATUS_OPTIONS,
   applyExistingAttendanceRecords,
   createDefaultAttendanceList,
+  summarizePrayerAttendance,
 } from '@/lib/admin/attendance';
 
 export const LESSON_ATTENDANCE_STATUS_OPTIONS = PRAYER_ATTENDANCE_STATUS_OPTIONS;
@@ -15,6 +16,8 @@ export function buildLessonAttendancePayload(attendanceList) {
     })),
   };
 }
+
+export const summarizeLessonAttendance = summarizePrayerAttendance;
 
 export {
   ATTENDANCE_STATUS,
