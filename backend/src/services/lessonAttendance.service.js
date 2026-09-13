@@ -7,6 +7,7 @@ const { ERROR_MESSAGES } = require('../constants/errors');
 const { USER_ROLE, USER_STATUS } = require('../constants/user');
 const { getTodayUtcDate } = require('../utils/time');
 const { getUserClassId } = require('../utils/userClass');
+const { parseLessonAttendanceSavePayload } = require('../validators/lessonAttendance');
 
 function getLessonAttendanceDate() {
   return getTodayUtcDate(getCronTimezone());
@@ -59,10 +60,70 @@ async function getRabbiLessonAttendanceToday(actor) {
   };
 }
 
+async function assertStudentsBelongToRabbiClass(actor, studentIds) {
+  const students = await User.find({
+    ...buildRabbiClassStudentFilter(actor),
+    _id: { $in: studentIds },
+  }).select('_id');
+
+  if (students.length === studentIds.length) {
+    return;
+  }
+
+  throw new AppError(ERROR_MESSAGES.STUDENT_NOT_IN_RABBI_CLASS, 403, {
+    errors: { records: ERROR_MESSAGES.STUDENT_NOT_IN_RABBI_CLASS },
+  });
+}
+
+async function saveRabbiLessonAttendance(actor, payload) {
+  const { records } = parseLessonAttendanceSavePayload(payload);
+  const studentIds = records.map((record) => record.studentId);
+  const date = getLessonAttendanceDate();
+
+  await assertStudentsBelongToRabbiClass(actor, studentIds);
+
+  const operations = records.map((record) => ({
+    updateOne: {
+      filter: {
+        studentId: record.studentId,
+        date,
+        activityType: ACTIVITY_TYPE.LESSON,
+      },
+      update: {
+        $set: {
+          status: record.status,
+          rabbiId: actor._id,
+          reportedBy: actor._id,
+          date,
+          activityType: ACTIVITY_TYPE.LESSON,
+        },
+        $setOnInsert: {
+          studentId: record.studentId,
+        },
+      },
+      upsert: true,
+    },
+  }));
+
+  await Attendance.bulkWrite(operations, { ordered: false });
+
+  const savedRecords = await Attendance.find({
+    rabbiId: actor._id,
+    date,
+    activityType: ACTIVITY_TYPE.LESSON,
+  }).sort({ createdAt: 1 });
+
+  return {
+    date,
+    records: savedRecords,
+  };
+}
+
 module.exports = {
   buildRabbiClassStudentFilter,
   getLessonAttendanceDate,
   getRabbiLessonAttendanceToday,
   listRabbiClassStudents,
   resolveRabbiClassId,
+  saveRabbiLessonAttendance,
 };

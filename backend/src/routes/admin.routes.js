@@ -58,6 +58,16 @@ router.get(
   roleMiddleware([USER_ROLE.RABBI]),
   lessonAttendanceController.getRabbiLessonAttendanceToday,
 );
+router.post(
+  '/lesson-attendance',
+  roleMiddleware([USER_ROLE.RABBI]),
+  lessonAttendanceController.saveRabbiLessonAttendance,
+);
+router.put(
+  '/lesson-attendance',
+  roleMiddleware([USER_ROLE.RABBI]),
+  lessonAttendanceController.saveRabbiLessonAttendance,
+);
 
 router.get('/phones/status', phoneController.getDailyStatus);
 router.post('/phones/deposit', phoneController.toggleDeposit);
