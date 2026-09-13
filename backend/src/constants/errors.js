@@ -43,6 +43,8 @@ const ERROR_MESSAGES = Object.freeze({
   INVALID_ATTENDANCE_STATUS: 'סטטוס הנוכחות אינו תקין',
   ATTENDANCE_RECORDS_REQUIRED: 'יש לשלוח מערך דיווחי נוכחות',
   ATTENDANCE_SAVED: 'הנוכחות נשמרה בהצלחה',
+  LESSON_ATTENDANCE_SAVED: 'שמירה בוצעה בהצלחה',
+  STUDENT_NOT_IN_RABBI_CLASS: 'ניתן לדווח נוכחות רק לתלמידים בשיעור שלך',
   INVALID_PHONE_DEPOSIT_STATUS: 'סטטוס ההפקדה אינו תקין',
   PHONE_DEPOSIT_UPDATED: 'סטטוס ההפקדה עודכן בהצלחה',
   INVALID_LEAVE_DATE: 'תאריך החופשה אינו תקין',

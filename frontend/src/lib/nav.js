@@ -1,5 +1,6 @@
 export const RABBI_NAV_ITEMS = Object.freeze([
   { href: '/rabbi', label: 'דאשבורד', icon: 'dashboard' },
+  { href: '/rabbi/attendance', label: 'נוכחות שיעור', icon: 'attendance' },
   { href: '/rabbi/messages', label: 'הודעות', icon: 'messages' },
 ]);
 
