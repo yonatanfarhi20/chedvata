@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const { PHONE_DEPOSIT_STATUS } = require('../constants/phonePenalties');
 const { USER_STATUS, USER_ROLE } = require('../constants/user');
 
 const userSchema = new mongoose.Schema(
@@ -61,6 +62,15 @@ const userSchema = new mongoose.Schema(
       enum: Object.values(USER_STATUS),
       default: USER_STATUS.PENDING_EMAIL_VERIFICATION,
     },
+    phoneDepositStatus: {
+      type: String,
+      enum: Object.values(PHONE_DEPOSIT_STATUS),
+      default: PHONE_DEPOSIT_STATUS.NONE,
+    },
+    phoneDepositStartedAt: {
+      type: Date,
+      default: null,
+    },
     verificationToken: {
       type: String,
       select: false,
@@ -78,6 +88,8 @@ const userSchema = new mongoose.Schema(
     timestamps: { createdAt: true, updatedAt: false },
   },
 );
+
+userSchema.index({ role: 1, phoneDepositStatus: 1 });
 
 userSchema.pre('save', async function hashPassword() {
   if (!this.isModified('password')) {
