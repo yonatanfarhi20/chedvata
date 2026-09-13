@@ -1,8 +1,10 @@
 const Attendance = require('../models/Attendance.model');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
+const { ACTIVITY_TYPE } = require('../constants/attendance');
 const { ERROR_MESSAGES } = require('../constants/errors');
 const { USER_ROLE } = require('../constants/user');
+const phonePenaltyService = require('./phonePenalty.service');
 const {
   parseAttendanceQuery,
   parseAttendanceSavePayload,
@@ -64,6 +66,10 @@ async function saveAttendance(payload, { reportedBy } = {}) {
   }));
 
   await Attendance.bulkWrite(operations, { ordered: false });
+
+  if (activityType === ACTIVITY_TYPE.PRAYER) {
+    await phonePenaltyService.evaluatePrayerAttendancePenalties(studentIds);
+  }
 
   const savedRecords = await Attendance.find({ date, activityType }).sort({ createdAt: 1 });
 

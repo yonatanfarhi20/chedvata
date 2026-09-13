@@ -6,6 +6,7 @@ const CRON_EXPRESSIONS = Object.freeze({
 const CRON_JOB_NAMES = Object.freeze({
   CLEANUP_EXPIRED_EMAIL_VERIFICATIONS: 'cleanup-expired-email-verifications',
   CLEANUP_EXPIRED_ADMIN_APPROVALS: 'cleanup-expired-admin-approvals',
+  EXPIRE_PHONE_PENALTIES: 'expire-phone-penalties',
 });
 
 const CLEANUP_REASONS = Object.freeze({
