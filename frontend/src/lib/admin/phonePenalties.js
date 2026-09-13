@@ -18,3 +18,24 @@ export function getPhonePenaltyStudentId(student) {
 
   return String(student.studentId || student._id || '');
 }
+
+export function formatRemainingDepositTime(remainingMs) {
+  const safeRemaining = Math.max(0, Number(remainingMs) || 0);
+  const totalHours = Math.ceil(safeRemaining / (60 * 60 * 1000));
+  const days = Math.floor(totalHours / 24);
+  const hours = totalHours % 24;
+
+  if (safeRemaining === 0) {
+    return 'התקופה הסתיימה';
+  }
+
+  if (days > 0 && hours > 0) {
+    return `${days} ימים ו-${hours} שעות`;
+  }
+
+  if (days > 0) {
+    return `${days} ימים`;
+  }
+
+  return `${hours} שעות`;
+}

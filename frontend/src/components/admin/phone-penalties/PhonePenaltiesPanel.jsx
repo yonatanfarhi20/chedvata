@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import DepositedList from '@/components/admin/phone-penalties/DepositedList';
 import PendingDepositList from '@/components/admin/phone-penalties/PendingDepositList';
+import ReadyForReturnList from '@/components/admin/phone-penalties/ReadyForReturnList';
 import RequireAuth from '@/components/auth/RequireAuth';
 import { PHONE_DEPOSIT_STATUS, PHONE_PENALTY_TABS } from '@/lib/admin/phonePenalties';
 import { SENIOR_MANAGEMENT_ROLES } from '@/lib/auth/constants';
@@ -9,6 +11,8 @@ import { SENIOR_MANAGEMENT_ROLES } from '@/lib/auth/constants';
 function PhonePenaltiesContent() {
   const [activeTab, setActiveTab] = useState(PHONE_DEPOSIT_STATUS.PENDING_DEPOSIT);
   const [pendingDeposit] = useState([]);
+  const [deposited] = useState([]);
+  const [readyForReturn] = useState([]);
   const [busyStudentId] = useState('');
 
   return (
@@ -65,10 +69,15 @@ function PhonePenaltiesContent() {
                   onConfirmDeposit={() => {}}
                 />
               ) : null}
-              {isActive && tab.id !== PHONE_DEPOSIT_STATUS.PENDING_DEPOSIT ? (
-                <p className="rounded-xl border border-border bg-card px-4 py-6 text-sm text-muted shadow-sm">
-                  הרשימה עבור «{tab.label}» תוצג כאן.
-                </p>
+              {isActive && tab.id === PHONE_DEPOSIT_STATUS.DEPOSITED ? (
+                <DepositedList students={deposited} />
+              ) : null}
+              {isActive && tab.id === PHONE_DEPOSIT_STATUS.READY_FOR_RETURN ? (
+                <ReadyForReturnList
+                  students={readyForReturn}
+                  busyStudentId={busyStudentId}
+                  onConfirmReturn={() => {}}
+                />
               ) : null}
             </div>
           );
