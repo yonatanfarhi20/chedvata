@@ -57,6 +57,17 @@ export function PhonesIcon() {
   );
 }
 
+export function PhonePenaltiesIcon() {
+  return (
+    <Icon>
+      <rect x="7" y="2" width="8" height="16" rx="2" />
+      <path d="M10 5h2M11 15h.01" />
+      <circle cx="17" cy="17" r="4" />
+      <path d="M17 15.5v2l1.2 1.2" />
+    </Icon>
+  );
+}
+
 export function LeavesIcon() {
   return (
     <Icon>
@@ -107,6 +118,7 @@ export const SIDEBAR_ICONS = {
   attendance: AttendanceIcon,
   prayer: PrayerIcon,
   phones: PhonesIcon,
+  phonePenalties: PhonePenaltiesIcon,
   leaves: LeavesIcon,
   messages: MessagesIcon,
 };
