@@ -9,6 +9,10 @@ const attendanceSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Student is required'],
     },
+    rabbiId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
     date: {
       type: Date,
       required: [true, 'Attendance date is required'],
@@ -42,6 +46,7 @@ const attendanceSchema = new mongoose.Schema(
 
 attendanceSchema.index({ studentId: 1, date: 1, activityType: 1 }, { unique: true });
 attendanceSchema.index({ date: 1, activityType: 1 });
+attendanceSchema.index({ rabbiId: 1, date: 1, activityType: 1 });
 
 const Attendance = mongoose.model('Attendance', attendanceSchema);
 
