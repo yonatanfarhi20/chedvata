@@ -7,6 +7,8 @@ const {
   PHONE_PENALTY_RULES,
 } = require('../constants/phonePenalties');
 const { USER_ROLE, USER_STATUS } = require('../constants/user');
+const { getCronTimezone } = require('../config/cron');
+const { getTodayUtcDate, normalizeToUtcDate } = require('../utils/time');
 
 function buildActivePrayerInfractionFilter(studentId, extra = {}) {
   return {
@@ -105,6 +107,112 @@ async function evaluateAllActiveStudentPenalties() {
   return evaluatePrayerAttendancePenalties(students.map((student) => student._id));
 }
 
+function getRequiredCleanWeeks(status) {
+  return status === ATTENDANCE_STATUS.LATE
+    ? PHONE_PENALTY_RULES.LATE_EXPIRY_CLEAN_WEEKS
+    : PHONE_PENALTY_RULES.ABSENCE_EXPIRY_CLEAN_WEEKS;
+}
+
+function getConsecutiveCleanWeeks(lastInfractionDate, todayUtc) {
+  const lastDate = normalizeToUtcDate(lastInfractionDate);
+  const today = normalizeToUtcDate(todayUtc);
+  const cleanDays = Math.max(
+    0,
+    Math.round((today.getTime() - lastDate.getTime()) / PHONE_PENALTY_RULES.MS_PER_DAY),
+  );
+
+  return Math.floor(cleanDays / 7);
+}
+
+function getDepositReadyAt(startedAt) {
+  if (!startedAt) {
+    return null;
+  }
+
+  return new Date(
+    new Date(startedAt).getTime() +
+      PHONE_PENALTY_RULES.DEPOSIT_DURATION_DAYS * PHONE_PENALTY_RULES.MS_PER_DAY,
+  );
+}
+
+async function expireStudentInfractions(studentId, todayUtc) {
+  const infractions = await listActivePrayerInfractions(studentId);
+
+  if (infractions.length === 0) {
+    return [];
+  }
+
+  let remainingWeeks = getConsecutiveCleanWeeks(infractions[infractions.length - 1].date, todayUtc);
+  const expired = [];
+
+  for (const infraction of infractions) {
+    const requiredWeeks = getRequiredCleanWeeks(infraction.status);
+
+    if (remainingWeeks < requiredWeeks) {
+      break;
+    }
+
+    infraction.penaltyState = ATTENDANCE_PENALTY_STATE.CONSUMED;
+    await infraction.save();
+    remainingWeeks -= requiredWeeks;
+    expired.push(infraction);
+  }
+
+  return expired;
+}
+
+async function expireStaleAttendancePenalties(todayUtc = getTodayUtcDate(getCronTimezone())) {
+  const students = await User.find({
+    role: USER_ROLE.STUDENT,
+    status: USER_STATUS.ACTIVE,
+  }).select('_id');
+
+  const expiredByStudent = [];
+
+  for (const student of students) {
+    const expired = await expireStudentInfractions(student._id, todayUtc);
+
+    if (expired.length > 0) {
+      expiredByStudent.push({
+        studentId: String(student._id),
+        expiredCount: expired.length,
+      });
+    }
+  }
+
+  return expiredByStudent;
+}
+
+async function promoteCompletedPhoneDeposits(now = new Date()) {
+  const result = await User.updateMany(
+    {
+      role: USER_ROLE.STUDENT,
+      phoneDepositStatus: PHONE_DEPOSIT_STATUS.DEPOSITED,
+      phoneDepositStartedAt: { $ne: null, $lte: new Date(now.getTime() - PHONE_PENALTY_RULES.DEPOSIT_DURATION_DAYS * PHONE_PENALTY_RULES.MS_PER_DAY) },
+    },
+    {
+      $set: {
+        phoneDepositStatus: PHONE_DEPOSIT_STATUS.READY_FOR_RETURN,
+      },
+    },
+  );
+
+  return result.modifiedCount || 0;
+}
+
+async function runDailyPhonePenaltyMaintenance(now = new Date()) {
+  const todayUtc = getTodayUtcDate(getCronTimezone());
+  const expired = await expireStaleAttendancePenalties(todayUtc);
+  const evaluated = await evaluateAllActiveStudentPenalties();
+  const promoted = await promoteCompletedPhoneDeposits(now);
+
+  return {
+    expiredStudents: expired.length,
+    evaluatedStudents: evaluated.length,
+    promotedDeposits: promoted,
+  };
+}
+
 module.exports = {
   buildActivePrayerInfractionFilter,
   convertLatesToAbsences,
@@ -112,5 +220,11 @@ module.exports = {
   evaluateAllActiveStudentPenalties,
   evaluatePrayerAttendancePenalties,
   evaluateStudentPhonePenalty,
+  expireStaleAttendancePenalties,
+  expireStudentInfractions,
+  getConsecutiveCleanWeeks,
+  getDepositReadyAt,
   listActivePrayerInfractions,
+  promoteCompletedPhoneDeposits,
+  runDailyPhonePenaltyMaintenance,
 };
