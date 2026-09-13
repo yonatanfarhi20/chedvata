@@ -1,6 +1,7 @@
 const express = require('express');
 const adminController = require('../controllers/admin.controller');
 const attendanceController = require('../controllers/attendance.controller');
+const lessonAttendanceController = require('../controllers/lessonAttendance.controller');
 const dashboardController = require('../controllers/dashboard.controller');
 const leaveController = require('../controllers/leave.controller');
 const messageController = require('../controllers/message.controller');
@@ -8,7 +9,7 @@ const phoneController = require('../controllers/phone.controller');
 const profileController = require('../controllers/profile.controller');
 const verifyAdmin = require('../middlewares/verifyAdmin.middleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
-const { SENIOR_MANAGEMENT_ROLES } = require('../constants/user');
+const { SENIOR_MANAGEMENT_ROLES, USER_ROLE } = require('../constants/user');
 
 const router = express.Router();
 const profileRouter = express.Router();
@@ -46,6 +47,17 @@ router.delete('/users/:id', adminController.deleteUser);
 
 router.get('/attendance', attendanceController.listAttendance);
 router.post('/attendance', attendanceController.saveAttendance);
+
+router.get(
+  '/lesson-attendance/students',
+  roleMiddleware([USER_ROLE.RABBI]),
+  lessonAttendanceController.listRabbiClassStudents,
+);
+router.get(
+  '/lesson-attendance/today',
+  roleMiddleware([USER_ROLE.RABBI]),
+  lessonAttendanceController.getRabbiLessonAttendanceToday,
+);
 
 router.get('/phones/status', phoneController.getDailyStatus);
 router.post('/phones/deposit', phoneController.toggleDeposit);
