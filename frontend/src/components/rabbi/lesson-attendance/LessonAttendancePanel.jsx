@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AttendanceSaveBar from '@/components/admin/attendance/AttendanceSaveBar';
+import LessonAttendanceExistingReportModal from '@/components/rabbi/lesson-attendance/LessonAttendanceExistingReportModal';
 import LessonAttendanceSummaryModal from '@/components/rabbi/lesson-attendance/LessonAttendanceSummaryModal';
 import LessonAttendanceTable from '@/components/rabbi/lesson-attendance/LessonAttendanceTable';
 import RequireAuth from '@/components/auth/RequireAuth';
@@ -10,11 +11,12 @@ import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import Toast from '@/components/ui/Toast';
 import { getUserFullName } from '@/lib/admin/users';
-import { getRabbiClassStudents, saveRabbiLessonAttendance } from '@/lib/api/rabbi';
+import { getRabbiClassStudents, getRabbiLessonAttendanceToday, saveRabbiLessonAttendance } from '@/lib/api/rabbi';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 import { USER_ROLE, getDashboardPath } from '@/lib/auth/constants';
 import { useSession } from '@/lib/auth/session';
 import {
+  applyExistingAttendanceRecords,
   buildLessonAttendancePayload,
   createDefaultAttendanceList,
   summarizeLessonAttendance,
@@ -26,20 +28,41 @@ function LessonAttendanceContent() {
   const loadRequestIdRef = useRef(0);
   const redirectTimeoutRef = useRef(null);
   const [attendanceList, setAttendanceList] = useState([]);
+  const [existingRecords, setExistingRecords] = useState([]);
+  const [isExistingReportOpen, setIsExistingReportOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [toast, setToast] = useState({ open: false, message: '', variant: 'success' });
+  const homePath = getDashboardPath(session?.user?.role);
+
+  const scheduleHomeRedirect = useCallback(
+    (delayMs = 1800) => {
+      if (redirectTimeoutRef.current) {
+        window.clearTimeout(redirectTimeoutRef.current);
+      }
+
+      redirectTimeoutRef.current = window.setTimeout(() => {
+        router.replace(homePath);
+      }, delayMs);
+    },
+    [homePath, router],
+  );
 
   const loadLessonAttendance = useCallback(async () => {
     const requestId = loadRequestIdRef.current + 1;
     loadRequestIdRef.current = requestId;
     setIsLoading(true);
     setLoadError('');
+    setIsExistingReportOpen(false);
+    setExistingRecords([]);
 
     try {
-      const studentsData = await getRabbiClassStudents();
+      const [studentsData, attendanceData] = await Promise.all([
+        getRabbiClassStudents(),
+        getRabbiLessonAttendanceToday(),
+      ]);
 
       if (requestId !== loadRequestIdRef.current) {
         return;
@@ -48,8 +71,17 @@ function LessonAttendanceContent() {
       const students = (Array.isArray(studentsData?.students) ? studentsData.students : [])
         .slice()
         .sort((left, right) => getUserFullName(left).localeCompare(getUserFullName(right), 'he'));
+      const records = Array.isArray(attendanceData?.records) ? attendanceData.records : [];
 
       setAttendanceList(createDefaultAttendanceList(students));
+      setExistingRecords(records);
+
+      if (students.length === 0) {
+        scheduleHomeRedirect();
+        return;
+      }
+
+      setIsExistingReportOpen(Boolean(attendanceData?.alreadyReported) || records.length > 0);
     } catch (error) {
       if (requestId !== loadRequestIdRef.current) {
         return;
@@ -60,13 +92,14 @@ function LessonAttendanceContent() {
       }
 
       setAttendanceList([]);
+      setExistingRecords([]);
       setLoadError(getErrorMessage(error, 'לא ניתן לטעון את נתוני נוכחות השיעור.'));
     } finally {
       if (requestId === loadRequestIdRef.current) {
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [scheduleHomeRedirect]);
 
   useEffect(() => {
     loadLessonAttendance();
@@ -90,8 +123,8 @@ function LessonAttendanceContent() {
   );
 
   const summary = useMemo(() => summarizeLessonAttendance(attendanceList), [attendanceList]);
-  const canSave = !isLoading && !loadError && attendanceList.length > 0;
-  const homePath = getDashboardPath(session?.user?.role);
+  const hasNoStudents = !isLoading && !loadError && attendanceList.length === 0;
+  const canSave = !isLoading && !loadError && !isExistingReportOpen && attendanceList.length > 0;
 
   function handleStatusChange(studentId, status) {
     setAttendanceList((current) =>
@@ -101,6 +134,23 @@ function LessonAttendanceContent() {
 
   function handleCloseToast() {
     setToast({ open: false, message: '', variant: 'success' });
+  }
+
+  function handleGoHome() {
+    if (redirectTimeoutRef.current) {
+      window.clearTimeout(redirectTimeoutRef.current);
+    }
+
+    router.replace(homePath);
+  }
+
+  function handleExistingReportBack() {
+    handleGoHome();
+  }
+
+  function handleExistingReportContinue() {
+    setAttendanceList((current) => applyExistingAttendanceRecords(current, existingRecords));
+    setIsExistingReportOpen(false);
   }
 
   function handleOpenSummary() {
@@ -136,12 +186,7 @@ function LessonAttendanceContent() {
         message: 'שמירה בוצעה בהצלחה',
         variant: 'success',
       });
-      if (redirectTimeoutRef.current) {
-        window.clearTimeout(redirectTimeoutRef.current);
-      }
-      redirectTimeoutRef.current = window.setTimeout(() => {
-        router.replace(homePath);
-      }, 1200);
+      scheduleHomeRedirect(1200);
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         return;
@@ -181,11 +226,20 @@ function LessonAttendanceContent() {
         <div className="min-h-0 flex-1 overflow-y-auto">
           {isLoading ? <p className="text-sm text-muted">טוען נתוני נוכחות...</p> : null}
 
-          {!isLoading && !loadError ? (
+          {hasNoStudents ? (
+            <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card px-4 py-8 text-center shadow-sm">
+              <p className="text-sm font-medium text-foreground">אין כרגע תלמידים בשיעור</p>
+              <Button type="button" variant="secondary" fullWidth={false} onClick={handleGoHome}>
+                חזרה
+              </Button>
+            </div>
+          ) : null}
+
+          {!isLoading && !loadError && !hasNoStudents ? (
             <LessonAttendanceTable
               students={students}
               statuses={statuses}
-              disabled={isSubmitting}
+              disabled={isExistingReportOpen || isSubmitting}
               onStatusChange={handleStatusChange}
             />
           ) : null}
@@ -201,6 +255,12 @@ function LessonAttendanceContent() {
           />
         ) : null}
       </section>
+
+      <LessonAttendanceExistingReportModal
+        open={isExistingReportOpen}
+        onBack={handleExistingReportBack}
+        onContinue={handleExistingReportContinue}
+      />
 
       <LessonAttendanceSummaryModal
         open={isSummaryOpen}
