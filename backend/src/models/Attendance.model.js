@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { ACTIVITY_TYPE, ATTENDANCE_STATUS } = require('../constants/attendance');
+const { ATTENDANCE_PENALTY_STATE } = require('../constants/phonePenalties');
 const { normalizeToUtcDate } = require('../utils/time');
 
 const attendanceSchema = new mongoose.Schema(
@@ -37,6 +38,11 @@ const attendanceSchema = new mongoose.Schema(
     reportedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+    },
+    penaltyState: {
+      type: String,
+      enum: Object.values(ATTENDANCE_PENALTY_STATE),
+      default: ATTENDANCE_PENALTY_STATE.ACTIVE,
     },
   },
   {
