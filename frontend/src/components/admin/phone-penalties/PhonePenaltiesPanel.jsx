@@ -1,12 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import PendingDepositList from '@/components/admin/phone-penalties/PendingDepositList';
 import RequireAuth from '@/components/auth/RequireAuth';
 import { PHONE_DEPOSIT_STATUS, PHONE_PENALTY_TABS } from '@/lib/admin/phonePenalties';
 import { SENIOR_MANAGEMENT_ROLES } from '@/lib/auth/constants';
 
 function PhonePenaltiesContent() {
   const [activeTab, setActiveTab] = useState(PHONE_DEPOSIT_STATUS.PENDING_DEPOSIT);
+  const [pendingDeposit] = useState([]);
+  const [busyStudentId] = useState('');
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-background p-4 md:p-8">
@@ -55,7 +58,14 @@ function PhonePenaltiesContent() {
               hidden={!isActive}
               className="min-h-0 flex-1 overflow-y-auto"
             >
-              {isActive ? (
+              {isActive && tab.id === PHONE_DEPOSIT_STATUS.PENDING_DEPOSIT ? (
+                <PendingDepositList
+                  students={pendingDeposit}
+                  busyStudentId={busyStudentId}
+                  onConfirmDeposit={() => {}}
+                />
+              ) : null}
+              {isActive && tab.id !== PHONE_DEPOSIT_STATUS.PENDING_DEPOSIT ? (
                 <p className="rounded-xl border border-border bg-card px-4 py-6 text-sm text-muted shadow-sm">
                   הרשימה עבור «{tab.label}» תוצג כאן.
                 </p>
