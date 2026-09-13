@@ -85,6 +85,22 @@ export function togglePhoneDeposit({ studentId, isDeposited }) {
   });
 }
 
+export function getPhonePenaltyQueues() {
+  return apiRequest('/api/admin/phone-penalties');
+}
+
+export function confirmPhonePenaltyDeposit(studentId) {
+  return apiRequest(`/api/admin/phone-penalties/${encodeURIComponent(studentId)}/deposit`, {
+    method: 'POST',
+  });
+}
+
+export function confirmPhonePenaltyReturn(studentId) {
+  return apiRequest(`/api/admin/phone-penalties/${encodeURIComponent(studentId)}/return`, {
+    method: 'POST',
+  });
+}
+
 export function searchStudents(name) {
   const params = new URLSearchParams({ name });
   return apiRequest(`/api/admin/users/search?${params.toString()}`);
