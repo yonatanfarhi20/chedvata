@@ -40,7 +40,9 @@ export default function VacationRequestsTable({ vacations = [], emptyMessage }) 
           {vacations.map((vacation) => (
             <tr key={getVacationId(vacation)}>
               <td className="px-4 py-3 font-medium text-foreground">
-                {formatVacationDate(vacation.startDate)} – {formatVacationDate(vacation.endDate)}
+                <span dir="ltr" className="inline-block tabular-nums">
+                  {formatVacationDate(vacation.startDate)} – {formatVacationDate(vacation.endDate)}
+                </span>
               </td>
               <td className="px-4 py-3 tabular-nums text-foreground">{vacation.daysCount || '—'}</td>
               <td className="px-4 py-3 text-foreground">{vacation.reason || '—'}</td>
