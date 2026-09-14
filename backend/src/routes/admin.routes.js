@@ -3,7 +3,6 @@ const adminController = require('../controllers/admin.controller');
 const attendanceController = require('../controllers/attendance.controller');
 const lessonAttendanceController = require('../controllers/lessonAttendance.controller');
 const dashboardController = require('../controllers/dashboard.controller');
-const leaveController = require('../controllers/leave.controller');
 const messageController = require('../controllers/message.controller');
 const phonePenaltyController = require('../controllers/phonePenalty.controller');
 const profileController = require('../controllers/profile.controller');
@@ -85,7 +84,6 @@ router.post(
   phonePenaltyController.confirmPhoneReturn,
 );
 
-router.post('/leaves', leaveController.createLeave);
 router.get('/messages', messageController.listMessages);
 router.post('/messages', messageController.createMessage);
 

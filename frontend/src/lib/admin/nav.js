@@ -16,7 +16,12 @@ export const ADMIN_NAV_ITEMS = Object.freeze([
     icon: 'phonePenalties',
     roles: SENIOR_MANAGEMENT_ROLES,
   },
-  { href: '/admin/leaves', label: 'חופשות', icon: 'leaves' },
+  {
+    href: '/admin/leaves',
+    label: 'חופשות',
+    icon: 'leaves',
+    roles: SENIOR_MANAGEMENT_ROLES,
+  },
   { href: '/admin/messages', label: 'הודעות', icon: 'messages' },
 ]);
 

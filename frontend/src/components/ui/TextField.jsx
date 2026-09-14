@@ -14,6 +14,8 @@ export default function TextField({
   dir,
   inputMode,
   maxLength,
+  min,
+  max,
 }) {
   const inputId = id || name;
   const errorId = `${inputId}-error`;
@@ -42,6 +44,8 @@ export default function TextField({
         dir={dir}
         inputMode={inputMode}
         maxLength={maxLength}
+        min={min}
+        max={max}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? errorId : undefined}
         className={`w-full rounded-lg border bg-card px-3 py-2.5 text-base text-foreground outline-none transition-colors placeholder:text-muted disabled:cursor-not-allowed disabled:opacity-60 ${
