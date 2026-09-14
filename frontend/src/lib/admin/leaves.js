@@ -1,3 +1,10 @@
+import { getUserFullName } from '@/lib/admin/users';
+import {
+  VACATION_STATUS,
+  formatVacationDate,
+  getVacationId,
+} from '@/lib/student/vacations';
+
 export function getTodayDateInputValue(date = new Date()) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -24,3 +31,24 @@ export function validateLeaveForm({ studentId, startDate, endDate }) {
 
   return errors;
 }
+
+export function getVacationStudentName(vacation) {
+  return getUserFullName(vacation?.student) || 'תלמיד';
+}
+
+export function getPendingVacations(data) {
+  return Array.isArray(data?.pending) ? data.pending : [];
+}
+
+export function getApprovedVacations(data) {
+  return Array.isArray(data?.approved) ? data.approved : [];
+}
+
+export function getVacationSettings(data) {
+  const days = Number(data?.settings?.defaultVacationDays);
+  return {
+    defaultVacationDays: Number.isInteger(days) ? days : 11,
+  };
+}
+
+export { VACATION_STATUS, formatVacationDate, getVacationId };

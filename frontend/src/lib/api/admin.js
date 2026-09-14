@@ -95,10 +95,14 @@ export function searchStudents(name) {
   return apiRequest(`/api/admin/users/search?${params.toString()}`);
 }
 
-export function createLeave(payload) {
-  return apiRequest('/api/admin/leaves', {
-    method: 'POST',
-    body: payload,
+export function getAdminVacations() {
+  return apiRequest('/api/vacations/all');
+}
+
+export function updateVacationStatus(vacationId, status) {
+  return apiRequest(`/api/vacations/${encodeURIComponent(vacationId)}/status`, {
+    method: 'PUT',
+    body: { status },
   });
 }
 
