@@ -18,6 +18,22 @@ async function getVacationSettings() {
   );
 }
 
+async function updateVacationSettings(defaultVacationDays) {
+  return SystemSettings.findOneAndUpdate(
+    { key: SYSTEM_SETTINGS_KEY },
+    {
+      $set: { defaultVacationDays },
+      $setOnInsert: { key: SYSTEM_SETTINGS_KEY },
+    },
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true,
+    },
+  );
+}
+
 module.exports = {
   getVacationSettings,
+  updateVacationSettings,
 };

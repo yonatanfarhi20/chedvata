@@ -4,6 +4,7 @@ const authRoutes = require('./routes/auth.routes');
 const adminRoutes = require('./routes/admin.routes');
 const messageRoutes = require('./routes/message.routes');
 const vacationRoutes = require('./routes/vacation.routes');
+const settingsRoutes = require('./routes/settings.routes');
 const notFound = require('./middlewares/notFound');
 const errorHandler = require('./middlewares/errorHandler.middleware');
 
@@ -20,6 +21,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/vacations', vacationRoutes);
+app.use('/api/settings', settingsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
