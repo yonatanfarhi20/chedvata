@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import DashboardSectionCard from '@/components/student/dashboard/DashboardSectionCard';
 import PrayerDangerGauge from '@/components/student/dashboard/PrayerDangerGauge';
+import PrayerExpiryTimeline from '@/components/student/dashboard/PrayerExpiryTimeline';
 import StudentDashboardSkeleton from '@/components/student/dashboard/StudentDashboardSkeleton';
 import VacationDonutChart from '@/components/student/dashboard/VacationDonutChart';
 import Alert from '@/components/ui/Alert';
@@ -118,7 +119,7 @@ export default function StudentDashboard() {
                   activeAbsences={overview.prayers.activeAbsences}
                   maxAbsences={overview.prayers.maxAbsences}
                 />
-                <SectionPlaceholder label="ציר הזמן של האירועים יתווסף בהמשך." />
+                <PrayerExpiryTimeline events={overview.prayers.events} />
               </div>
             </DashboardSectionCard>
 

@@ -3,6 +3,11 @@ export const PRAYER_EVENT_STATUS = Object.freeze({
   ABSENT: 'absent',
 });
 
+export const PRAYER_EVENT_LABELS = Object.freeze({
+  [PRAYER_EVENT_STATUS.LATE]: 'איחור',
+  [PRAYER_EVENT_STATUS.ABSENT]: 'חיסור',
+});
+
 export const LESSON_DAY_STATUS = Object.freeze({
   PRESENT: 'present',
   LATE: 'late',
@@ -101,6 +106,38 @@ export function getPrayerDangerTone(activeAbsences) {
   }
 
   return PRAYER_DANGER_TONE.SAFE;
+}
+
+export function formatDashboardDate(dateValue) {
+  if (!dateValue) {
+    return '—';
+  }
+
+  const isoDate = typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)
+    ? `${dateValue}T00:00:00.000Z`
+    : dateValue;
+  const parsed = new Date(isoDate);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return '—';
+  }
+
+  return parsed.toLocaleDateString('he-IL', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+export function getRemainingDaysLabel(remainingDays) {
+  const days = Number(remainingDays) || 0;
+
+  if (days === 1) {
+    return 'נותר יום אחד למחיקה';
+  }
+
+  return `נותרו ${days} ימים למחיקה`;
 }
 
 export function getLessonOverview(data) {
