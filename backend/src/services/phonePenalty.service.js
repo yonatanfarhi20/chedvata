@@ -113,6 +113,56 @@ function getRequiredCleanWeeks(status) {
     : PHONE_PENALTY_RULES.ABSENCE_EXPIRY_CLEAN_WEEKS;
 }
 
+function getRequiredCleanDays(status) {
+  return getRequiredCleanWeeks(status) * 7;
+}
+
+function toIsoDate(date) {
+  const normalized = normalizeToUtcDate(date);
+  const year = normalized.getUTCFullYear();
+  const month = String(normalized.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(normalized.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function buildInfractionDeletionTimeline(infractions, todayUtc) {
+  const items = Array.isArray(infractions) ? infractions : [];
+
+  if (items.length === 0) {
+    return [];
+  }
+
+  const cleanDays = Math.max(
+    0,
+    Math.round(
+      (normalizeToUtcDate(todayUtc).getTime() -
+        normalizeToUtcDate(items[items.length - 1].date).getTime()) /
+        PHONE_PENALTY_RULES.MS_PER_DAY,
+    ),
+  );
+
+  let queuedDays = 0;
+
+  return items.map((infraction) => {
+    const waiting = queuedDays > cleanDays;
+    const requiredDays = getRequiredCleanDays(infraction.status);
+    queuedDays += requiredDays;
+    const remainingDays = Math.max(0, queuedDays - cleanDays);
+    const progressPercent =
+      queuedDays === 0 ? 100 : Math.min(100, Math.round(((queuedDays - remainingDays) / queuedDays) * 100));
+
+    return {
+      id: String(infraction._id),
+      status: infraction.status,
+      date: toIsoDate(infraction.date),
+      requiredDays,
+      remainingDays,
+      waiting,
+      progressPercent,
+    };
+  });
+}
+
 function getConsecutiveCleanWeeks(lastInfractionDate, todayUtc) {
   const lastDate = normalizeToUtcDate(lastInfractionDate);
   const today = normalizeToUtcDate(todayUtc);
@@ -215,6 +265,7 @@ async function runDailyPhonePenaltyMaintenance(now = new Date()) {
 
 module.exports = {
   buildActivePrayerInfractionFilter,
+  buildInfractionDeletionTimeline,
   convertLatesToAbsences,
   countActivePrayerAbsences,
   evaluateAllActiveStudentPenalties,
@@ -224,6 +275,8 @@ module.exports = {
   expireStudentInfractions,
   getConsecutiveCleanWeeks,
   getDepositReadyAt,
+  getRequiredCleanDays,
+  getRequiredCleanWeeks,
   listActivePrayerInfractions,
   promoteCompletedPhoneDeposits,
   runDailyPhonePenaltyMaintenance,

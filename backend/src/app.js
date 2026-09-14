@@ -5,6 +5,7 @@ const adminRoutes = require('./routes/admin.routes');
 const messageRoutes = require('./routes/message.routes');
 const vacationRoutes = require('./routes/vacation.routes');
 const settingsRoutes = require('./routes/settings.routes');
+const studentDashboardRoutes = require('./routes/studentDashboard.routes');
 const notFound = require('./middlewares/notFound');
 const errorHandler = require('./middlewares/errorHandler.middleware');
 
@@ -22,6 +23,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/vacations', vacationRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/student/dashboard', studentDashboardRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
