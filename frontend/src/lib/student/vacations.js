@@ -41,6 +41,12 @@ export function getTodayDateInputValue(date = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
+export function getTomorrowDateInputValue(date = new Date()) {
+  const tomorrow = new Date(date);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return getTodayDateInputValue(tomorrow);
+}
+
 export function countInclusiveDays(startDate, endDate) {
   const start = toUtcDate(startDate);
   const end = toUtcDate(endDate);
@@ -124,17 +130,49 @@ export function filterVacationsByTab(vacations, tab) {
   return list.filter((vacation) => isHistoryVacation(vacation));
 }
 
-export function validateVacationRequest({ startDate, endDate, remainingDays }) {
+export function hasOverlappingVacation(vacations, startDate, endDate) {
+  const start = toUtcDate(startDate);
+  const end = toUtcDate(endDate);
+
+  if (!start || !end) {
+    return false;
+  }
+
+  return (Array.isArray(vacations) ? vacations : []).some((vacation) => {
+    if (
+      vacation?.status !== VACATION_STATUS.PENDING &&
+      vacation?.status !== VACATION_STATUS.APPROVED
+    ) {
+      return false;
+    }
+
+    const existingStart = toUtcDate(vacation.startDate);
+    const existingEnd = toUtcDate(vacation.endDate);
+
+    if (!existingStart || !existingEnd) {
+      return false;
+    }
+
+    return existingStart <= end && existingEnd >= start;
+  });
+}
+
+export function validateVacationRequest({ startDate, endDate, remainingDays, vacations = [] }) {
   const errors = {};
+  const minDate = getTomorrowDateInputValue();
 
   if (!startDate) {
     errors.startDate = 'שדה זה הוא חובה';
+  } else if (startDate < minDate) {
+    errors.startDate = 'ניתן לבקש חופשה רק החל ממחר';
   }
 
   if (!endDate) {
     errors.endDate = 'שדה זה הוא חובה';
   } else if (startDate && endDate < startDate) {
     errors.endDate = 'תאריך הסיום חייב להיות באותו יום או אחרי תאריך ההתחלה';
+  } else if (endDate < minDate) {
+    errors.endDate = 'ניתן לבקש חופשה רק החל ממחר';
   }
 
   const requestedDays = countInclusiveDays(startDate, endDate);
@@ -143,9 +181,15 @@ export function validateVacationRequest({ startDate, endDate, remainingDays }) {
     errors.quota = `הבקשה חורגת מהיתרה. נותרו ${remainingDays} ימים, והבקשה כוללת ${requestedDays} ימים.`;
   }
 
+  if (!errors.startDate && !errors.endDate && hasOverlappingVacation(vacations, startDate, endDate)) {
+    errors.overlap = 'כבר קיימת חופשה באחד מהתאריכים שנבחרו';
+  }
+
   return {
     errors,
     requestedDays,
     exceedsQuota: Boolean(errors.quota),
+    hasOverlap: Boolean(errors.overlap),
+    isBlocked: Boolean(errors.startDate || errors.endDate || errors.quota || errors.overlap),
   };
 }

@@ -34,6 +34,12 @@ function getTodayUtcDate(timeZone) {
   return new Date(Date.UTC(year, month - 1, day));
 }
 
+function getTomorrowUtcDate(timeZone) {
+  const tomorrow = getTodayUtcDate(timeZone);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  return tomorrow;
+}
+
 function normalizeToUtcDate(value) {
   if (value == null || value === '') {
     return value;
@@ -63,4 +69,5 @@ module.exports = {
   normalizeToUtcDate,
   getZonedDateTimeParts,
   getTodayUtcDate,
+  getTomorrowUtcDate,
 };

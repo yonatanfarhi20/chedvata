@@ -180,6 +180,7 @@ export default function StudentVacationsPanel() {
       <VacationRequestModal
         open={isRequestOpen}
         remainingDays={stats.remainingDays}
+        vacations={vacations}
         onClose={() => setIsRequestOpen(false)}
         onSuccess={handleRequestSuccess}
       />

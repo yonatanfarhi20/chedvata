@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import StudentAutocomplete from '@/components/admin/students/StudentAutocomplete';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
@@ -8,7 +8,7 @@ import Modal from '@/components/ui/Modal';
 import Spinner from '@/components/ui/Spinner';
 import TextField from '@/components/ui/TextField';
 import {
-  getTodayDateInputValue,
+  getTomorrowDateInputValue,
   isVacationQuotaExceeded,
   validateLeaveForm,
 } from '@/lib/admin/leaves';
@@ -22,7 +22,7 @@ const INITIAL_VALUES = {
   reason: '',
 };
 
-export default function AdminVacationFormModal({ open, onClose, onSuccess }) {
+export default function AdminVacationFormModal({ open, vacations = [], onClose, onSuccess }) {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [values, setValues] = useState(INITIAL_VALUES);
   const [errors, setErrors] = useState({});
@@ -36,11 +36,11 @@ export default function AdminVacationFormModal({ open, onClose, onSuccess }) {
       return;
     }
 
-    const today = getTodayDateInputValue();
+    const tomorrow = getTomorrowDateInputValue();
     setSelectedStudent(null);
     setValues({
-      startDate: today,
-      endDate: today,
+      startDate: tomorrow,
+      endDate: tomorrow,
       reason: '',
     });
     setErrors({});
@@ -54,12 +54,13 @@ export default function AdminVacationFormModal({ open, onClose, onSuccess }) {
     const { name, value } = event.target;
     setValues((current) => ({ ...current, [name]: value }));
     setErrors((current) => {
-      if (!current[name]) {
+      if (!current[name] && !current.overlap) {
         return current;
       }
 
       const next = { ...current };
       delete next[name];
+      delete next.overlap;
       return next;
     });
     setFormError('');
@@ -68,16 +69,28 @@ export default function AdminVacationFormModal({ open, onClose, onSuccess }) {
   function handleStudentSelect(student) {
     setSelectedStudent(student);
     setErrors((current) => {
-      if (!current.studentId) {
+      if (!current.studentId && !current.overlap) {
         return current;
       }
 
       const next = { ...current };
       delete next.studentId;
+      delete next.overlap;
       return next;
     });
     setFormError('');
   }
+
+  const validationErrors = useMemo(
+    () =>
+      validateLeaveForm({
+        studentId: getStudentId(selectedStudent),
+        startDate: values.startDate,
+        endDate: values.endDate,
+        vacations,
+      }),
+    [selectedStudent, values.endDate, values.startDate, vacations],
+  );
 
   async function submitPayload(payload) {
     setIsSubmitting(true);
@@ -124,15 +137,9 @@ export default function AdminVacationFormModal({ open, onClose, onSuccess }) {
     }
 
     const studentId = getStudentId(selectedStudent);
-    const nextErrors = validateLeaveForm({
-      studentId,
-      startDate: values.startDate,
-      endDate: values.endDate,
-    });
+    setErrors(validationErrors);
 
-    setErrors(nextErrors);
-
-    if (Object.keys(nextErrors).length > 0) {
+    if (Object.keys(validationErrors).length > 0) {
       return;
     }
 
@@ -168,6 +175,7 @@ export default function AdminVacationFormModal({ open, onClose, onSuccess }) {
       >
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
           {formError ? <Alert>{formError}</Alert> : null}
+          {validationErrors.overlap ? <Alert>{validationErrors.overlap}</Alert> : null}
 
           <StudentAutocomplete
             id="admin-vacation-student"
@@ -186,9 +194,10 @@ export default function AdminVacationFormModal({ open, onClose, onSuccess }) {
               label="תאריך התחלה"
               value={values.startDate}
               onChange={handleChange}
-              error={errors.startDate}
+              error={errors.startDate || (values.startDate ? validationErrors.startDate : undefined)}
               required
               disabled={isSubmitting}
+              min={getTomorrowDateInputValue()}
             />
             <TextField
               id="admin-vacation-end-date"
@@ -197,9 +206,10 @@ export default function AdminVacationFormModal({ open, onClose, onSuccess }) {
               label="תאריך סיום"
               value={values.endDate}
               onChange={handleChange}
-              error={errors.endDate}
+              error={errors.endDate || (values.endDate ? validationErrors.endDate : undefined)}
               required
               disabled={isSubmitting}
+              min={values.startDate || getTomorrowDateInputValue()}
             />
           </div>
 
@@ -220,7 +230,14 @@ export default function AdminVacationFormModal({ open, onClose, onSuccess }) {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={
+                isSubmitting ||
+                Boolean(
+                  validationErrors.overlap ||
+                    (values.startDate && validationErrors.startDate) ||
+                    (values.endDate && validationErrors.endDate),
+                )
+              }
               className="inline-flex items-center justify-center gap-2"
             >
               {isSubmitting ? (

@@ -53,6 +53,8 @@ const ERROR_MESSAGES = Object.freeze({
   LEAVE_CREATED: 'החופשה נוספה בהצלחה',
   VACATION_CREATED: 'החופשה נוספה בהצלחה',
   VACATION_QUOTA_EXCEEDED: 'הבקשה חורגת ממכסת ימי החופשה השנתית',
+  VACATION_START_TOO_SOON: 'ניתן לבקש חופשה רק החל ממחר',
+  VACATION_OVERLAP: 'כבר קיימת חופשה באחד מהתאריכים שנבחרו',
   VACATION_REQUESTED: 'בקשת החופשה נשלחה בהצלחה',
   VACATION_NOT_FOUND: 'בקשת החופשה לא נמצאה',
   VACATION_NOT_PENDING: 'ניתן לעדכן רק בקשות ממתינות לאישור',

@@ -9,7 +9,7 @@ import TextField from '@/components/ui/TextField';
 import { requestVacation } from '@/lib/api/vacations';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 import {
-  getTodayDateInputValue,
+  getTomorrowDateInputValue,
   validateVacationRequest,
 } from '@/lib/student/vacations';
 
@@ -22,6 +22,7 @@ const INITIAL_VALUES = {
 export default function VacationRequestModal({
   open,
   remainingDays = 0,
+  vacations = [],
   onClose,
   onSuccess,
 }) {
@@ -36,8 +37,9 @@ export default function VacationRequestModal({
         startDate: values.startDate,
         endDate: values.endDate,
         remainingDays,
+        vacations,
       }),
-    [remainingDays, values.endDate, values.startDate],
+    [remainingDays, vacations, values.endDate, values.startDate],
   );
 
   useEffect(() => {
@@ -45,10 +47,10 @@ export default function VacationRequestModal({
       return;
     }
 
-    const today = getTodayDateInputValue();
+    const tomorrow = getTomorrowDateInputValue();
     setValues({
-      startDate: today,
-      endDate: today,
+      startDate: tomorrow,
+      endDate: tomorrow,
       reason: '',
     });
     setErrors({});
@@ -60,13 +62,14 @@ export default function VacationRequestModal({
     const { name, value } = event.target;
     setValues((current) => ({ ...current, [name]: value }));
     setErrors((current) => {
-      if (!current[name] && !current.quota) {
+      if (!current[name] && !current.quota && !current.overlap) {
         return current;
       }
 
       const next = { ...current };
       delete next[name];
       delete next.quota;
+      delete next.overlap;
       return next;
     });
     setFormError('');
@@ -75,7 +78,7 @@ export default function VacationRequestModal({
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (isSubmitting || validation.exceedsQuota) {
+    if (isSubmitting || validation.isBlocked) {
       setErrors(validation.errors);
       return;
     }
@@ -124,6 +127,7 @@ export default function VacationRequestModal({
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         {formError ? <Alert>{formError}</Alert> : null}
         {validation.exceedsQuota ? <Alert>{validation.errors.quota}</Alert> : null}
+        {validation.hasOverlap ? <Alert>{validation.errors.overlap}</Alert> : null}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <TextField
@@ -133,9 +137,10 @@ export default function VacationRequestModal({
             label="תאריך התחלה"
             value={values.startDate}
             onChange={handleChange}
-            error={errors.startDate}
+            error={errors.startDate || (values.startDate ? validation.errors.startDate : undefined)}
             required
             disabled={isSubmitting}
+            min={getTomorrowDateInputValue()}
           />
           <TextField
             id="vacation-end-date"
@@ -144,9 +149,10 @@ export default function VacationRequestModal({
             label="תאריך סיום"
             value={values.endDate}
             onChange={handleChange}
-            error={errors.endDate}
+            error={errors.endDate || (values.endDate ? validation.errors.endDate : undefined)}
             required
             disabled={isSubmitting}
+            min={values.startDate || getTomorrowDateInputValue()}
           />
         </div>
 
@@ -172,7 +178,7 @@ export default function VacationRequestModal({
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting || validation.exceedsQuota}
+            disabled={isSubmitting || validation.isBlocked}
             className="inline-flex items-center justify-center gap-2"
           >
             {isSubmitting ? (

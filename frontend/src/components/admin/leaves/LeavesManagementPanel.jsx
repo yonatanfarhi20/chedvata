@@ -189,6 +189,7 @@ function LeavesManagementContent() {
 
       <AdminVacationFormModal
         open={isCreateOpen}
+        vacations={[...pending, ...approved]}
         onClose={() => setIsCreateOpen(false)}
         onSuccess={(message) => {
           setToast({ open: true, message, variant: 'success' });

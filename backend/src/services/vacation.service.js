@@ -13,7 +13,7 @@ const {
   buildVacationNotificationContent,
 } = require('../constants/vacations');
 const { getCronTimezone } = require('../config/cron');
-const { getZonedDateTimeParts } = require('../utils/time');
+const { getTomorrowUtcDate, getZonedDateTimeParts } = require('../utils/time');
 const {
   parseStudentVacationPayload,
   parseAdminVacationPayload,
@@ -90,6 +90,37 @@ function assertWithinQuota(snapshot) {
   }
 }
 
+function assertStartsFromTomorrow(startDate) {
+  const tomorrow = getTomorrowUtcDate(getCronTimezone());
+
+  if (startDate < tomorrow) {
+    throw new AppError(ERROR_MESSAGES.VACATION_START_TOO_SOON, 400, {
+      errors: { startDate: ERROR_MESSAGES.VACATION_START_TOO_SOON },
+    });
+  }
+}
+
+async function assertNoOverlappingVacation(studentId, startDate, endDate, excludeId) {
+  const query = {
+    studentId,
+    status: { $in: [VACATION_STATUS.PENDING, VACATION_STATUS.APPROVED] },
+    startDate: { $lte: endDate },
+    endDate: { $gte: startDate },
+  };
+
+  if (excludeId) {
+    query._id = { $ne: excludeId };
+  }
+
+  const overlapping = await Vacation.findOne(query).select('_id');
+
+  if (overlapping) {
+    throw new AppError(ERROR_MESSAGES.VACATION_OVERLAP, 400, {
+      errors: { startDate: ERROR_MESSAGES.VACATION_OVERLAP },
+    });
+  }
+}
+
 function serializeStudent(student) {
   if (!student || !student._id) {
     return undefined;
@@ -161,6 +192,9 @@ async function notifyStudentOfVacation(vacation, { senderId, student, status } =
 
 async function requestVacation(payload, { studentId } = {}) {
   const data = parseStudentVacationPayload(payload);
+  assertStartsFromTomorrow(data.startDate);
+  await assertNoOverlappingVacation(studentId, data.startDate, data.endDate);
+
   const snapshot = await getQuotaSnapshot(studentId, data);
 
   assertWithinQuota(snapshot);
@@ -231,6 +265,15 @@ async function updateVacationStatus(vacationId, payload, { actorId } = {}) {
     throw new AppError(ERROR_MESSAGES.VACATION_NOT_PENDING, 400);
   }
 
+  if (status === VACATION_STATUS.APPROVED) {
+    await assertNoOverlappingVacation(
+      vacation.studentId,
+      vacation.startDate,
+      vacation.endDate,
+      vacation._id,
+    );
+  }
+
   vacation.status = status;
   await vacation.save();
 
@@ -250,6 +293,8 @@ async function updateVacationStatus(vacationId, payload, { actorId } = {}) {
 async function adminCreateVacation(payload, { actorId } = {}) {
   const data = parseAdminVacationPayload(payload);
   const student = await findActiveStudent(data.studentId);
+  assertStartsFromTomorrow(data.startDate);
+  await assertNoOverlappingVacation(student._id, data.startDate, data.endDate);
   const snapshot = await getQuotaSnapshot(student._id, data);
 
   if (!data.overrideLimit) {
