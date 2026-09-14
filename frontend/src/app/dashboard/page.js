@@ -1,9 +1,9 @@
-import DashboardHome from '@/components/dashboard/DashboardHome';
+import StudentDashboard from '@/components/student/dashboard/StudentDashboard';
 
 export const metadata = {
-  title: 'אזור אישי | ישיבת חדוותא',
+  title: 'לוח בקרה | ישיבת חדוותא',
 };
 
 export default function StudentDashboardPage() {
-  return <DashboardHome title="אזור אישי" />;
+  return <StudentDashboard />;
 }

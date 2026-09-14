@@ -325,6 +325,7 @@ async function adminCreateVacation(payload, { actorId } = {}) {
 module.exports = {
   requestVacation,
   getMyVacationRequests,
+  getQuotaSnapshot,
   listAllVacations,
   updateVacationStatus,
   adminCreateVacation,
