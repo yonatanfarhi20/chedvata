@@ -145,6 +145,24 @@ async function requestVacation(payload, { studentId } = {}) {
   return serializeVacation(vacation);
 }
 
+async function getMyVacationRequests(studentId) {
+  const [vacations, snapshot] = await Promise.all([
+    Vacation.find({ studentId }).sort({ startDate: -1, createdAt: -1 }),
+    getQuotaSnapshot(studentId),
+  ]);
+
+  return {
+    vacations: vacations.map(serializeVacation),
+    stats: {
+      year: snapshot.year,
+      annualQuota: snapshot.annualQuota,
+      usedDays: snapshot.usedDays,
+      remainingDays: snapshot.remainingDays,
+    },
+  };
+}
+
 module.exports = {
   requestVacation,
+  getMyVacationRequests,
 };

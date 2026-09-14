@@ -13,5 +13,10 @@ router.post(
   roleMiddleware([USER_ROLE.STUDENT]),
   vacationController.requestVacation,
 );
+router.get(
+  '/my-requests',
+  roleMiddleware([USER_ROLE.STUDENT]),
+  vacationController.getMyRequests,
+);
 
 module.exports = router;

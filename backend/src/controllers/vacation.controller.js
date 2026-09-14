@@ -12,6 +12,13 @@ async function requestVacation(req, res) {
   });
 }
 
+async function getMyRequests(req, res) {
+  const result = await vacationService.getMyVacationRequests(req.user?._id);
+
+  return res.status(200).json(result);
+}
+
 module.exports = {
   requestVacation,
+  getMyRequests,
 };
