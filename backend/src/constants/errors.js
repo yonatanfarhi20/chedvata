@@ -45,8 +45,6 @@ const ERROR_MESSAGES = Object.freeze({
   ATTENDANCE_SAVED: 'הנוכחות נשמרה בהצלחה',
   LESSON_ATTENDANCE_SAVED: 'שמירה בוצעה בהצלחה',
   STUDENT_NOT_IN_RABBI_CLASS: 'ניתן לדווח נוכחות רק לתלמידים בשיעור שלך',
-  INVALID_PHONE_DEPOSIT_STATUS: 'סטטוס ההפקדה אינו תקין',
-  PHONE_DEPOSIT_UPDATED: 'סטטוס ההפקדה עודכן בהצלחה',
   PHONE_PENALTY_INVALID_TRANSITION: 'לא ניתן לעדכן את סטטוס ההפקדה במצב הנוכחי',
   PHONE_DEPOSIT_CONFIRMED: 'קבלת המכשיר אושרה והספירה לשבוע החלה',
   PHONE_RETURN_CONFIRMED: 'המכשיר הוחזר לתלמיד והמונה אופס',

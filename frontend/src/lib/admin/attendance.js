@@ -10,11 +10,6 @@ export const ATTENDANCE_STATUS = Object.freeze({
   ON_LEAVE: 'on_leave',
 });
 
-export const ACTIVITY_TYPE_LABELS = Object.freeze({
-  [ACTIVITY_TYPE.LESSON]: 'שיעור',
-  [ACTIVITY_TYPE.PRAYER]: 'תפילה',
-});
-
 export const ATTENDANCE_STATUS_LABELS = Object.freeze({
   [ATTENDANCE_STATUS.PRESENT]: 'נוכח',
   [ATTENDANCE_STATUS.ABSENT]: 'נעדר',
@@ -73,19 +68,6 @@ export function getAttendanceRecordStudentId(record) {
   }
 
   return String(record.studentId);
-}
-
-export function buildAttendanceStatusMap(students, records) {
-  const recordsByStudentId = new Map(
-    records.map((record) => [getAttendanceRecordStudentId(record), record.status]),
-  );
-
-  return Object.fromEntries(
-    students.map((student) => [
-      student._id,
-      recordsByStudentId.get(student._id) || ATTENDANCE_STATUS.PRESENT,
-    ]),
-  );
 }
 
 export function createDefaultAttendanceList(students) {

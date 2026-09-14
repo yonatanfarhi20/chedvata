@@ -36,15 +36,6 @@ export function LateIcon() {
   );
 }
 
-export function PhonesKpiIcon() {
-  return (
-    <Icon>
-      <rect x="8" y="3" width="8" height="18" rx="2" />
-      <path d="M11 6h2M12 18h.01" />
-    </Icon>
-  );
-}
-
 export function LeavesKpiIcon() {
   return (
     <Icon>
@@ -57,6 +48,5 @@ export function LeavesKpiIcon() {
 export const KPI_ICONS = {
   present: PresentIcon,
   late: LateIcon,
-  phones: PhonesKpiIcon,
   leaves: LeavesKpiIcon,
 };

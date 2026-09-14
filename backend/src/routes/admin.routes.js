@@ -5,7 +5,6 @@ const lessonAttendanceController = require('../controllers/lessonAttendance.cont
 const dashboardController = require('../controllers/dashboard.controller');
 const leaveController = require('../controllers/leave.controller');
 const messageController = require('../controllers/message.controller');
-const phoneController = require('../controllers/phone.controller');
 const phonePenaltyController = require('../controllers/phonePenalty.controller');
 const profileController = require('../controllers/profile.controller');
 const verifyAdmin = require('../middlewares/verifyAdmin.middleware');
@@ -69,9 +68,6 @@ router.put(
   roleMiddleware([USER_ROLE.RABBI]),
   lessonAttendanceController.saveRabbiLessonAttendance,
 );
-
-router.get('/phones/status', phoneController.getDailyStatus);
-router.post('/phones/deposit', phoneController.toggleDeposit);
 
 router.get(
   '/phone-penalties',
