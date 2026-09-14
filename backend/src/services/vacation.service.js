@@ -16,6 +16,7 @@ const { getCronTimezone } = require('../config/cron');
 const { getZonedDateTimeParts } = require('../utils/time');
 const {
   parseStudentVacationPayload,
+  parseAdminVacationPayload,
   parseVacationId,
   parseVacationStatusPayload,
 } = require('../validators/vacations');
@@ -246,9 +247,40 @@ async function updateVacationStatus(vacationId, payload, { actorId } = {}) {
   return serializeVacation(vacation);
 }
 
+async function adminCreateVacation(payload, { actorId } = {}) {
+  const data = parseAdminVacationPayload(payload);
+  const student = await findActiveStudent(data.studentId);
+  const snapshot = await getQuotaSnapshot(student._id, data);
+
+  if (!data.overrideLimit) {
+    assertWithinQuota(snapshot);
+  }
+
+  const vacation = await Vacation.create({
+    studentId: student._id,
+    startDate: data.startDate,
+    endDate: data.endDate,
+    reason: data.reason,
+    status: VACATION_STATUS.APPROVED,
+    createdByAdmin: true,
+  });
+
+  await notifyStudentOfVacation(vacation, {
+    senderId: actorId,
+    student,
+    status: VACATION_STATUS.APPROVED,
+  });
+
+  return serializeVacation({
+    ...vacation.toObject(),
+    studentId: student,
+  });
+}
+
 module.exports = {
   requestVacation,
   getMyVacationRequests,
   listAllVacations,
   updateVacationStatus,
+  adminCreateVacation,
 };

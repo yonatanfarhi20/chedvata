@@ -1,5 +1,5 @@
 const Attendance = require('../models/Attendance.model');
-const Leave = require('../models/Leave.model');
+const Vacation = require('../models/Vacation.model');
 const User = require('../models/User');
 const { ATTENDANCE_STATUS, ACTIVITY_TYPE } = require('../constants/attendance');
 const {
@@ -10,6 +10,7 @@ const {
   buildPendingApprovalsMessage,
 } = require('../constants/dashboard');
 const { USER_ROLE, USER_STATUS } = require('../constants/user');
+const { VACATION_STATUS } = require('../constants/vacations');
 const { getCronTimezone } = require('../config/cron');
 const { getTodayUtcDate } = require('../utils/time');
 
@@ -179,9 +180,10 @@ function aggregateUsers() {
 }
 
 function aggregateLeaves(today) {
-  return Leave.aggregate([
+  return Vacation.aggregate([
     {
       $match: {
+        status: VACATION_STATUS.APPROVED,
         startDate: { $lte: today },
         endDate: { $gte: today },
       },

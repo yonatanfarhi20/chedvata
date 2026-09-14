@@ -51,6 +51,7 @@ const ERROR_MESSAGES = Object.freeze({
   INVALID_LEAVE_DATE: 'תאריך החופשה אינו תקין',
   INVALID_LEAVE_RANGE: 'תאריך הסיום חייב להיות באותו יום או אחרי תאריך ההתחלה',
   LEAVE_CREATED: 'החופשה נוספה בהצלחה',
+  VACATION_CREATED: 'החופשה נוספה בהצלחה',
   VACATION_QUOTA_EXCEEDED: 'הבקשה חורגת ממכסת ימי החופשה השנתית',
   VACATION_REQUESTED: 'בקשת החופשה נשלחה בהצלחה',
   VACATION_NOT_FOUND: 'בקשת החופשה לא נמצאה',

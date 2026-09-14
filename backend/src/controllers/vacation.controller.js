@@ -35,9 +35,21 @@ async function updateStatus(req, res) {
   });
 }
 
+async function adminCreate(req, res) {
+  const vacation = await vacationService.adminCreateVacation(req.body, {
+    actorId: req.user?._id,
+  });
+
+  return res.status(201).json({
+    message: ERROR_MESSAGES.VACATION_CREATED,
+    vacation,
+  });
+}
+
 module.exports = {
   requestVacation,
   getMyRequests,
   listAll,
   updateStatus,
+  adminCreate,
 };

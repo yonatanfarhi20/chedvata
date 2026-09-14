@@ -23,6 +23,11 @@ router.get(
   roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
   vacationController.listAll,
 );
+router.post(
+  '/admin-create',
+  roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
+  vacationController.adminCreate,
+);
 router.put(
   '/:id/status',
   roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
