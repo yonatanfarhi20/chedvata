@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import LeaveAssignmentForm from '@/components/admin/leaves/LeaveAssignmentForm';
+import RequireAuth from '@/components/auth/RequireAuth';
 import Toast from '@/components/ui/Toast';
+import { SENIOR_MANAGEMENT_ROLES } from '@/lib/auth/constants';
 
-export default function LeavesManagementPanel() {
+function LeavesManagementContent() {
   const [toast, setToast] = useState({ open: false, message: '', variant: 'success' });
 
   function handleCloseToast() {
@@ -41,5 +43,13 @@ export default function LeavesManagementPanel() {
         onClose={handleCloseToast}
       />
     </div>
+  );
+}
+
+export default function LeavesManagementPanel() {
+  return (
+    <RequireAuth allowedRoles={[...SENIOR_MANAGEMENT_ROLES]}>
+      <LeavesManagementContent />
+    </RequireAuth>
   );
 }
