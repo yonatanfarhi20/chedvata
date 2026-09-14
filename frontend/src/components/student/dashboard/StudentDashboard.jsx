@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import DashboardSectionCard from '@/components/student/dashboard/DashboardSectionCard';
+import LessonAttendanceCalendar from '@/components/student/dashboard/LessonAttendanceCalendar';
 import PrayerDangerGauge from '@/components/student/dashboard/PrayerDangerGauge';
 import PrayerExpiryTimeline from '@/components/student/dashboard/PrayerExpiryTimeline';
 import StudentDashboardSkeleton from '@/components/student/dashboard/StudentDashboardSkeleton';
@@ -17,14 +18,6 @@ import {
   getPrayerOverview,
   getVacationOverview,
 } from '@/lib/student/dashboard';
-
-function SectionPlaceholder({ label }) {
-  return (
-    <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-border bg-background/60 px-4 py-10 text-center">
-      <p className="text-sm text-muted">{label}</p>
-    </div>
-  );
-}
 
 export default function StudentDashboard() {
   const user = useSession()?.user;
@@ -128,7 +121,7 @@ export default function StudentDashboard() {
               title="נוכחות שיעורים"
               description="יומן חודשי לפי סטטוס הנוכחות בכל יום."
             >
-              <SectionPlaceholder label="גריד נוכחות השיעורים יתווסף בהמשך." />
+              <LessonAttendanceCalendar lessons={overview.lessons} />
             </DashboardSectionCard>
           </div>
         ) : null}

@@ -15,6 +15,15 @@ export const LESSON_DAY_STATUS = Object.freeze({
   NONE: 'none',
 });
 
+export const LESSON_DAY_LABELS = Object.freeze({
+  [LESSON_DAY_STATUS.PRESENT]: 'נוכח',
+  [LESSON_DAY_STATUS.LATE]: 'איחור',
+  [LESSON_DAY_STATUS.ABSENT]: 'חיסור',
+  [LESSON_DAY_STATUS.NONE]: 'אין שיעור',
+});
+
+export const HEBREW_WEEKDAYS = Object.freeze(['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳']);
+
 export const VACATION_USAGE_TONE = Object.freeze({
   SAFE: 'safe',
   WARNING: 'warning',
@@ -148,4 +157,42 @@ export function getLessonOverview(data) {
     month: lessons.month || null,
     days: Array.isArray(lessons.days) ? lessons.days : [],
   };
+}
+
+export function formatLessonMonthTitle(year, month) {
+  if (!year || !month) {
+    return 'החודש הנוכחי';
+  }
+
+  return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString('he-IL', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+export function buildLessonCalendarCells(year, month, days) {
+  if (!year || !month) {
+    return [];
+  }
+
+  const daysByDate = new Map((Array.isArray(days) ? days : []).map((day) => [day.date, day]));
+  const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const cells = Array.from({ length: firstWeekday }, () => null);
+
+  for (let day = 1; day <= lastDay; day += 1) {
+    const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    cells.push(
+      daysByDate.get(date) || {
+        date,
+        day,
+        weekday: new Date(Date.UTC(year, month - 1, day)).getUTCDay(),
+        status: LESSON_DAY_STATUS.NONE,
+        reason: 'no_lesson',
+      },
+    );
+  }
+
+  return cells;
 }
