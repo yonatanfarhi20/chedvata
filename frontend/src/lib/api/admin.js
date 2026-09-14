@@ -113,6 +113,13 @@ export function createAdminVacation(payload) {
   });
 }
 
+export function updateVacationSettings(payload) {
+  return apiRequest('/api/settings/vacations', {
+    method: 'PUT',
+    body: payload,
+  });
+}
+
 export function createMessage(payload) {
   return apiRequest('/api/admin/messages', {
     method: 'POST',

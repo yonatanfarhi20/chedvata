@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AdminVacationFormModal from '@/components/admin/leaves/AdminVacationFormModal';
 import AdminVacationsTable from '@/components/admin/leaves/AdminVacationsTable';
+import VacationSettingsCard from '@/components/admin/leaves/VacationSettingsCard';
 import RequireAuth from '@/components/auth/RequireAuth';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
@@ -12,6 +13,7 @@ import {
   getApprovedVacations,
   getPendingVacations,
   getVacationId,
+  getVacationSettings,
 } from '@/lib/admin/leaves';
 import { getAdminVacations, updateVacationStatus } from '@/lib/api/admin';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
@@ -21,6 +23,7 @@ function LeavesManagementContent() {
   const loadRequestIdRef = useRef(0);
   const [pending, setPending] = useState([]);
   const [approved, setApproved] = useState([]);
+  const [settings, setSettings] = useState({ defaultVacationDays: 11 });
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [busyVacationId, setBusyVacationId] = useState('');
@@ -30,6 +33,7 @@ function LeavesManagementContent() {
   const applyData = useCallback((data) => {
     setPending(getPendingVacations(data));
     setApproved(getApprovedVacations(data));
+    setSettings(getVacationSettings(data));
   }, []);
 
   const loadVacations = useCallback(async ({ silent = false } = {}) => {
@@ -165,6 +169,20 @@ function LeavesManagementContent() {
                 emptyMessage="אין חופשות מאושרות במערכת."
               />
             </section>
+
+            <VacationSettingsCard
+              defaultVacationDays={settings.defaultVacationDays}
+              disabled={Boolean(busyVacationId)}
+              onSaved={(defaultVacationDays, message) => {
+                setSettings({ defaultVacationDays });
+                setToast({
+                  open: true,
+                  message: message || 'מכסת ימי החופשה עודכנה בהצלחה',
+                  variant: 'success',
+                });
+              }}
+              onError={(message) => setToast({ open: true, message, variant: 'error' })}
+            />
           </div>
         )}
       </section>
