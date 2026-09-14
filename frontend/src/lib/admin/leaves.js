@@ -51,4 +51,8 @@ export function getVacationSettings(data) {
   };
 }
 
+export function isVacationQuotaExceeded(error) {
+  return Boolean(error && error.status === 400 && error.code === 'VACATION_QUOTA_EXCEEDED');
+}
+
 export { VACATION_STATUS, formatVacationDate, getVacationId };

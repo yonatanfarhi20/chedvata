@@ -106,6 +106,13 @@ export function updateVacationStatus(vacationId, status) {
   });
 }
 
+export function createAdminVacation(payload) {
+  return apiRequest('/api/vacations/admin-create', {
+    method: 'POST',
+    body: payload,
+  });
+}
+
 export function createMessage(payload) {
   return apiRequest('/api/admin/messages', {
     method: 'POST',

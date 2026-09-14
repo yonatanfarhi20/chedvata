@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import AdminVacationFormModal from '@/components/admin/leaves/AdminVacationFormModal';
 import AdminVacationsTable from '@/components/admin/leaves/AdminVacationsTable';
 import RequireAuth from '@/components/auth/RequireAuth';
 import Alert from '@/components/ui/Alert';
@@ -23,6 +24,7 @@ function LeavesManagementContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [busyVacationId, setBusyVacationId] = useState('');
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [toast, setToast] = useState({ open: false, message: '', variant: 'success' });
 
   const applyData = useCallback((data) => {
@@ -109,11 +111,22 @@ function LeavesManagementContent() {
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-background p-4 md:p-8">
       <section className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-1 flex-col">
-        <header className="mb-6 shrink-0">
-          <h1 className="text-xl font-semibold text-foreground">חופשות</h1>
-          <p className="mt-1 text-sm text-muted">
-            אישור ודחייה של בקשות תלמידים ומעקב אחר חופשות מאושרות.
-          </p>
+        <header className="mb-6 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">חופשות</h1>
+            <p className="mt-1 text-sm text-muted">
+              אישור ודחייה של בקשות תלמידים, מעקב אחר חופשות מאושרות והזנה יזומה.
+            </p>
+          </div>
+          <Button
+            type="button"
+            fullWidth={false}
+            onClick={() => setIsCreateOpen(true)}
+            disabled={isLoading}
+            className="sm:w-auto"
+          >
+            חופשה יזומה
+          </Button>
         </header>
 
         {loadError ? (
@@ -155,6 +168,15 @@ function LeavesManagementContent() {
           </div>
         )}
       </section>
+
+      <AdminVacationFormModal
+        open={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onSuccess={(message) => {
+          setToast({ open: true, message, variant: 'success' });
+          loadVacations({ silent: true });
+        }}
+      />
 
       <Toast
         open={toast.open}
