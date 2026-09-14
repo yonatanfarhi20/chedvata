@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import DashboardSectionCard from '@/components/student/dashboard/DashboardSectionCard';
+import PrayerDangerGauge from '@/components/student/dashboard/PrayerDangerGauge';
 import StudentDashboardSkeleton from '@/components/student/dashboard/StudentDashboardSkeleton';
 import VacationDonutChart from '@/components/student/dashboard/VacationDonutChart';
 import Alert from '@/components/ui/Alert';
@@ -113,7 +114,10 @@ export default function StudentDashboard() {
               description="מעקב חיסורים פעילים וסטטוס המחיקה לפי כללי ההתיישנות."
             >
               <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
-                <SectionPlaceholder label="מד הסכנה יתווסף בהמשך." />
+                <PrayerDangerGauge
+                  activeAbsences={overview.prayers.activeAbsences}
+                  maxAbsences={overview.prayers.maxAbsences}
+                />
                 <SectionPlaceholder label="ציר הזמן של האירועים יתווסף בהמשך." />
               </div>
             </DashboardSectionCard>
