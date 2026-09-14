@@ -1,16 +1,24 @@
 const Vacation = require('../models/Vacation.model');
+const Message = require('../models/Message.model');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const { ERROR_MESSAGES } = require('../constants/errors');
+const { MESSAGE_TYPE } = require('../constants/messages');
 const { USER_ROLE, USER_STATUS } = require('../constants/user');
 const {
   MS_PER_DAY,
   VACATION_STATUS,
   VACATION_QUOTA_EXCEEDED_CODE,
+  VACATION_NOTIFICATION_SUBJECT,
+  buildVacationNotificationContent,
 } = require('../constants/vacations');
 const { getCronTimezone } = require('../config/cron');
 const { getZonedDateTimeParts } = require('../utils/time');
-const { parseStudentVacationPayload } = require('../validators/vacations');
+const {
+  parseStudentVacationPayload,
+  parseVacationId,
+  parseVacationStatusPayload,
+} = require('../validators/vacations');
 const { getVacationSettings } = require('./systemSettings.service');
 
 function countInclusiveDays(startDate, endDate) {
@@ -127,6 +135,29 @@ async function findActiveStudent(studentId) {
   return student;
 }
 
+async function notifyStudentOfVacation(vacation, { senderId, student, status } = {}) {
+  if (!senderId || !student?._id) {
+    return;
+  }
+
+  try {
+    await Message.create({
+      senderId,
+      recipientId: student._id,
+      messageType: MESSAGE_TYPE.PERSONAL,
+      subject: VACATION_NOTIFICATION_SUBJECT,
+      content: buildVacationNotificationContent({
+        startDate: vacation.startDate,
+        endDate: vacation.endDate,
+        reason: vacation.reason,
+        status,
+      }),
+    });
+  } catch (error) {
+    console.error('[vacations] failed to create notification message', error);
+  }
+}
+
 async function requestVacation(payload, { studentId } = {}) {
   const data = parseStudentVacationPayload(payload);
   const snapshot = await getQuotaSnapshot(studentId, data);
@@ -162,7 +193,62 @@ async function getMyVacationRequests(studentId) {
   };
 }
 
+function serializeSettings(settings) {
+  return {
+    defaultVacationDays: settings.defaultVacationDays,
+  };
+}
+
+async function listAllVacations() {
+  const [pending, approved, settings] = await Promise.all([
+    Vacation.find({ status: VACATION_STATUS.PENDING })
+      .populate('studentId', 'firstName lastName classId')
+      .sort({ createdAt: -1 }),
+    Vacation.find({ status: VACATION_STATUS.APPROVED })
+      .populate('studentId', 'firstName lastName classId')
+      .sort({ startDate: 1, createdAt: -1 }),
+    getVacationSettings(),
+  ]);
+
+  return {
+    pending: pending.map(serializeVacation),
+    approved: approved.map(serializeVacation),
+    settings: serializeSettings(settings),
+  };
+}
+
+async function updateVacationStatus(vacationId, payload, { actorId } = {}) {
+  const id = parseVacationId(vacationId);
+  const { status } = parseVacationStatusPayload(payload);
+  const vacation = await Vacation.findById(id);
+
+  if (!vacation) {
+    throw new AppError(ERROR_MESSAGES.VACATION_NOT_FOUND, 404);
+  }
+
+  if (vacation.status !== VACATION_STATUS.PENDING) {
+    throw new AppError(ERROR_MESSAGES.VACATION_NOT_PENDING, 400);
+  }
+
+  vacation.status = status;
+  await vacation.save();
+
+  if (status === VACATION_STATUS.APPROVED) {
+    const student = await User.findById(vacation.studentId).select('_id firstName lastName classId');
+    await notifyStudentOfVacation(vacation, {
+      senderId: actorId,
+      student,
+      status: VACATION_STATUS.APPROVED,
+    });
+  }
+
+  await vacation.populate('studentId', 'firstName lastName classId');
+  return serializeVacation(vacation);
+}
+
 module.exports = {
   requestVacation,
   getMyVacationRequests,
+  listAllVacations,
+  updateVacationStatus,
 };

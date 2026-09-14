@@ -2,7 +2,7 @@ const express = require('express');
 const vacationController = require('../controllers/vacation.controller');
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
-const { USER_ROLE } = require('../constants/user');
+const { USER_ROLE, SENIOR_MANAGEMENT_ROLES } = require('../constants/user');
 
 const router = express.Router();
 
@@ -17,6 +17,16 @@ router.get(
   '/my-requests',
   roleMiddleware([USER_ROLE.STUDENT]),
   vacationController.getMyRequests,
+);
+router.get(
+  '/all',
+  roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
+  vacationController.listAll,
+);
+router.put(
+  '/:id/status',
+  roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
+  vacationController.updateStatus,
 );
 
 module.exports = router;
