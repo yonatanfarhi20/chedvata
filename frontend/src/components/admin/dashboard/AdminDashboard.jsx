@@ -17,7 +17,7 @@ import {
 import { getDashboard } from '@/lib/api/admin';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 
-const KPI_SKELETON_COUNT = 4;
+const KPI_SKELETON_COUNT = 3;
 
 export default function AdminDashboard() {
   const [overview, setOverview] = useState(null);
@@ -93,7 +93,7 @@ export default function AdminDashboard() {
 
         {isLoading ? (
           <>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: KPI_SKELETON_COUNT }, (_, index) => (
                 <KPICardSkeleton key={index} />
               ))}
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
 
         {!isLoading && !loadError ? (
           <>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
               {cards.map((card) => (
                 <KPICard
                   key={card.id}

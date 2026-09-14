@@ -1,6 +1,5 @@
 const Attendance = require('../models/Attendance.model');
 const Leave = require('../models/Leave.model');
-const PhoneDepositLog = require('../models/PhoneDepositLog.model');
 const User = require('../models/User');
 const { ATTENDANCE_STATUS, ACTIVITY_TYPE } = require('../constants/attendance');
 const {
@@ -9,14 +8,12 @@ const {
   LEAVES_PREVIEW_LIMIT,
   buildAttendanceAbsencesMessage,
   buildPendingApprovalsMessage,
-  buildPhoneDepositsMessage,
 } = require('../constants/dashboard');
 const { USER_ROLE, USER_STATUS } = require('../constants/user');
-const { getPhoneDepositTimezone } = require('../constants/phones');
-const { isPastPhoneDepositDeadline } = require('../utils/phoneAlerts');
+const { getCronTimezone } = require('../config/cron');
 const { getTodayUtcDate } = require('../utils/time');
 
-function getTodayRange(timeZone = getPhoneDepositTimezone()) {
+function getTodayRange(timeZone = getCronTimezone()) {
   const start = getTodayUtcDate(timeZone);
   const end = new Date(start);
   end.setUTCDate(end.getUTCDate() + 1);
@@ -78,11 +75,6 @@ function applyActivityCounts(rows = []) {
   return counts;
 }
 
-function getDepositedCount(rows = []) {
-  const depositedRow = rows.find((row) => row?._id === true);
-  return Number(depositedRow?.count) || 0;
-}
-
 function getPresentPercent(counts) {
   const denominator =
     counts[ATTENDANCE_STATUS.PRESENT] +
@@ -108,7 +100,7 @@ function buildAlert({ type, count, severity, title, message }) {
   };
 }
 
-function buildAlerts({ pendingCount, missingPhones, isPastDeadline, absentCount }) {
+function buildAlerts({ pendingCount, absentCount }) {
   const alerts = [];
 
   if (pendingCount > 0) {
@@ -119,18 +111,6 @@ function buildAlerts({ pendingCount, missingPhones, isPastDeadline, absentCount 
         severity: 'warning',
         title: 'אישורי הרשמה',
         message: buildPendingApprovalsMessage(pendingCount),
-      }),
-    );
-  }
-
-  if (isPastDeadline && missingPhones > 0) {
-    alerts.push(
-      buildAlert({
-        type: DASHBOARD_ALERT_TYPE.PHONE_DEPOSITS,
-        count: missingPhones,
-        severity: 'danger',
-        title: 'הפקדת טלפונים',
-        message: buildPhoneDepositsMessage(missingPhones),
       }),
     );
   }
@@ -176,18 +156,6 @@ function aggregateAttendance(today) {
             },
           },
         ],
-      },
-    },
-  ]);
-}
-
-function aggregatePhones(today) {
-  return PhoneDepositLog.aggregate([
-    { $match: { date: today } },
-    {
-      $group: {
-        _id: '$isDeposited',
-        count: { $sum: 1 },
       },
     },
   ]);
@@ -250,13 +218,10 @@ function aggregateLeaves(today) {
 }
 
 async function getDashboardOverview() {
-  const now = new Date();
   const { start: today } = getTodayRange();
-  const isPastDeadline = isPastPhoneDepositDeadline(now);
 
-  const [attendanceResult, phoneRows, usersResult, leavesResult] = await Promise.all([
+  const [attendanceResult, usersResult, leavesResult] = await Promise.all([
     aggregateAttendance(today),
-    aggregatePhones(today),
     aggregateUsers(),
     aggregateLeaves(today),
   ]);
@@ -266,11 +231,7 @@ async function getDashboardOverview() {
   const byActivity = applyActivityCounts(attendanceFacet.byActivity);
 
   const usersFacet = usersResult[0] || {};
-  const totalStudents = getFacetCount(usersFacet.activeStudents);
   const pendingCount = getFacetCount(usersFacet.pendingApprovals);
-
-  const deposited = getDepositedCount(phoneRows);
-  const missing = Math.max(totalStudents - deposited, 0);
 
   const leavesFacet = leavesResult[0] || {};
   const leavesCount = getFacetCount(leavesFacet.count);
@@ -283,12 +244,6 @@ async function getDashboardOverview() {
       presentPercent: getPresentPercent(attendance),
       byActivity,
     },
-    phones: {
-      deposited,
-      missing,
-      total: totalStudents,
-      isPastDeadline,
-    },
     leaves: {
       count: leavesCount,
       students: leaveStudents,
@@ -298,8 +253,6 @@ async function getDashboardOverview() {
     },
     alerts: buildAlerts({
       pendingCount,
-      missingPhones: missing,
-      isPastDeadline,
       absentCount: attendance[ATTENDANCE_STATUS.ABSENT],
     }),
   };
