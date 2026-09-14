@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import DashboardSectionCard from '@/components/student/dashboard/DashboardSectionCard';
 import StudentDashboardSkeleton from '@/components/student/dashboard/StudentDashboardSkeleton';
+import VacationDonutChart from '@/components/student/dashboard/VacationDonutChart';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import { getStudentDashboard } from '@/lib/api/studentDashboard';
@@ -103,7 +104,7 @@ export default function StudentDashboard() {
               title="חופשות"
               description="יתרת ימי החופשה השנתית מול הימים שכבר נוצלו."
             >
-              <SectionPlaceholder label="תצוגת החופשות תתווסף בהמשך." />
+              <VacationDonutChart stats={overview.vacations} />
             </DashboardSectionCard>
 
             <DashboardSectionCard
