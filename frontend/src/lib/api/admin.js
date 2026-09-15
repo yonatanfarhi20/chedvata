@@ -1,7 +1,30 @@
 import { apiRequest } from '@/lib/api/client';
 
+function getDashboardTrend(path, period) {
+  const params = new URLSearchParams();
+
+  if (period) {
+    params.set('period', period);
+  }
+
+  const query = params.toString();
+  return apiRequest(`${path}${query ? `?${query}` : ''}`);
+}
+
 export function getDashboard() {
   return apiRequest('/api/admin/dashboard');
+}
+
+export function getDailyVacations() {
+  return apiRequest('/api/admin/dashboard/vacations');
+}
+
+export function getPrayerAttendance(period) {
+  return getDashboardTrend('/api/admin/dashboard/prayers', period);
+}
+
+export function getLessonAttendance(period) {
+  return getDashboardTrend('/api/admin/dashboard/lessons', period);
 }
 
 export function getPendingUsers() {

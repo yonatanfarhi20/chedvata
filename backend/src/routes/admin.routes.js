@@ -20,7 +20,26 @@ profileRouter.put('/', profileController.updateProfile);
 profileRouter.put('/password', profileController.updatePassword);
 router.use('/profile', profileRouter);
 
-router.get('/dashboard', dashboardController.getDashboard);
+router.get(
+  '/dashboard/vacations',
+  roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
+  dashboardController.getDailyVacations,
+);
+router.get(
+  '/dashboard/prayers',
+  roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
+  dashboardController.getPrayerAttendance,
+);
+router.get(
+  '/dashboard/lessons',
+  roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
+  dashboardController.getLessonAttendance,
+);
+router.get(
+  '/dashboard',
+  roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
+  dashboardController.getDashboard,
+);
 
 router.get(
   '/users/pending',

@@ -2,7 +2,12 @@ import { SENIOR_MANAGEMENT_ROLES } from '@/lib/auth/constants';
 import { isNavItemActive } from '@/lib/nav';
 
 export const ADMIN_NAV_ITEMS = Object.freeze([
-  { href: '/admin', label: 'דאשבורד', icon: 'dashboard' },
+  {
+    href: '/admin',
+    label: 'דאשבורד',
+    icon: 'dashboard',
+    roles: SENIOR_MANAGEMENT_ROLES,
+  },
   { href: '/admin/users', label: 'ניהול משתמשים', icon: 'users' },
   {
     href: '/admin/prayer-attendance',

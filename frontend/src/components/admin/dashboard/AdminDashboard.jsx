@@ -1,46 +1,70 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import AlertListSkeleton from '@/components/admin/dashboard/AlertListSkeleton';
-import KPICard from '@/components/admin/dashboard/KPICard';
-import KPICardSkeleton from '@/components/admin/dashboard/KPICardSkeleton';
-import LeavesTodayList from '@/components/admin/dashboard/LeavesTodayList';
-import OpenTasksList from '@/components/admin/dashboard/OpenTasksList';
+import AttendanceTrendCard from '@/components/admin/dashboard/AttendanceTrendCard';
+import ManagementDashboardSkeleton from '@/components/admin/dashboard/ManagementDashboardSkeleton';
+import VacationsTodayWidget from '@/components/admin/dashboard/VacationsTodayWidget';
+import RequireAuth from '@/components/auth/RequireAuth';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import {
-  formatDashboardDate,
-  getDashboardAlerts,
-  getDashboardKpiCards,
-  getStudentsOnLeaveToday,
-} from '@/lib/admin/dashboard';
-import { getDashboard } from '@/lib/api/admin';
+  EMPTY_ATTENDANCE_TREND,
+  EMPTY_VACATIONS_TODAY,
+  getAttendanceTrendOverview,
+  getVacationsToday,
+} from '@/lib/admin/managementDashboard';
+import { getDailyVacations, getLessonAttendance, getPrayerAttendance } from '@/lib/api/admin';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
+import { SENIOR_MANAGEMENT_ROLES } from '@/lib/auth/constants';
+import { useSession } from '@/lib/auth/session';
+import { DASHBOARD_PERIOD } from '@/lib/rabbi/dashboard';
 
-const KPI_SKELETON_COUNT = 3;
+function VacationWidgetSkeleton() {
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5 shadow-sm" aria-hidden="true">
+      <div className="h-4 w-28 animate-pulse rounded bg-border" />
+      <div className="mt-2 h-3 w-48 animate-pulse rounded bg-border" />
+      <div className="mt-6 h-12 w-20 animate-pulse rounded bg-border" />
+      <div className="mt-3 h-3 w-36 animate-pulse rounded bg-border" />
+    </section>
+  );
+}
 
-export default function AdminDashboard() {
-  const [overview, setOverview] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
-  const loadRequestIdRef = useRef(0);
+function ManagementDashboardView() {
+  const user = useSession()?.user;
+  const [vacations, setVacations] = useState(EMPTY_VACATIONS_TODAY);
+  const [isVacationsLoading, setIsVacationsLoading] = useState(true);
+  const [vacationsError, setVacationsError] = useState('');
+  const vacationsRequestIdRef = useRef(0);
 
-  const loadDashboard = useCallback(async () => {
-    const requestId = loadRequestIdRef.current + 1;
-    loadRequestIdRef.current = requestId;
-    setIsLoading(true);
-    setLoadError('');
+  const [prayerPeriod, setPrayerPeriod] = useState(DASHBOARD_PERIOD.WEEK);
+  const [prayers, setPrayers] = useState(EMPTY_ATTENDANCE_TREND);
+  const [isPrayersLoading, setIsPrayersLoading] = useState(true);
+  const [prayersError, setPrayersError] = useState('');
+  const prayersRequestIdRef = useRef(0);
+
+  const [lessonPeriod, setLessonPeriod] = useState(DASHBOARD_PERIOD.WEEK);
+  const [lessons, setLessons] = useState(EMPTY_ATTENDANCE_TREND);
+  const [isLessonsLoading, setIsLessonsLoading] = useState(true);
+  const [lessonsError, setLessonsError] = useState('');
+  const lessonsRequestIdRef = useRef(0);
+
+  const loadVacations = useCallback(async () => {
+    const requestId = vacationsRequestIdRef.current + 1;
+    vacationsRequestIdRef.current = requestId;
+    setIsVacationsLoading(true);
+    setVacationsError('');
 
     try {
-      const data = await getDashboard();
+      const data = await getDailyVacations();
 
-      if (requestId !== loadRequestIdRef.current) {
+      if (requestId !== vacationsRequestIdRef.current) {
         return;
       }
 
-      setOverview(data && typeof data === 'object' ? data : null);
+      setVacations(getVacationsToday(data));
     } catch (error) {
-      if (requestId !== loadRequestIdRef.current) {
+      if (requestId !== vacationsRequestIdRef.current) {
         return;
       }
 
@@ -48,92 +72,172 @@ export default function AdminDashboard() {
         return;
       }
 
-      setOverview(null);
-      setLoadError(getErrorMessage(error, 'לא ניתן לטעון את נתוני לוח הבקרה.'));
+      setVacations(EMPTY_VACATIONS_TODAY);
+      setVacationsError(getErrorMessage(error, 'לא ניתן לטעון את נתוני החופשות.'));
     } finally {
-      if (requestId === loadRequestIdRef.current) {
-        setIsLoading(false);
+      if (requestId === vacationsRequestIdRef.current) {
+        setIsVacationsLoading(false);
+      }
+    }
+  }, []);
+
+  const loadPrayers = useCallback(async (selectedPeriod) => {
+    const requestId = prayersRequestIdRef.current + 1;
+    prayersRequestIdRef.current = requestId;
+    setIsPrayersLoading(true);
+    setPrayersError('');
+
+    try {
+      const data = await getPrayerAttendance(selectedPeriod);
+
+      if (requestId !== prayersRequestIdRef.current) {
+        return;
+      }
+
+      setPrayers(getAttendanceTrendOverview(data));
+    } catch (error) {
+      if (requestId !== prayersRequestIdRef.current) {
+        return;
+      }
+
+      if (error instanceof ApiError && error.status === 401) {
+        return;
+      }
+
+      setPrayers(EMPTY_ATTENDANCE_TREND);
+      setPrayersError(getErrorMessage(error, 'לא ניתן לטעון את נוכחות התפילות.'));
+    } finally {
+      if (requestId === prayersRequestIdRef.current) {
+        setIsPrayersLoading(false);
+      }
+    }
+  }, []);
+
+  const loadLessons = useCallback(async (selectedPeriod) => {
+    const requestId = lessonsRequestIdRef.current + 1;
+    lessonsRequestIdRef.current = requestId;
+    setIsLessonsLoading(true);
+    setLessonsError('');
+
+    try {
+      const data = await getLessonAttendance(selectedPeriod);
+
+      if (requestId !== lessonsRequestIdRef.current) {
+        return;
+      }
+
+      setLessons(getAttendanceTrendOverview(data));
+    } catch (error) {
+      if (requestId !== lessonsRequestIdRef.current) {
+        return;
+      }
+
+      if (error instanceof ApiError && error.status === 401) {
+        return;
+      }
+
+      setLessons(EMPTY_ATTENDANCE_TREND);
+      setLessonsError(getErrorMessage(error, 'לא ניתן לטעון את נוכחות השיעורים.'));
+    } finally {
+      if (requestId === lessonsRequestIdRef.current) {
+        setIsLessonsLoading(false);
       }
     }
   }, []);
 
   useEffect(() => {
-    loadDashboard();
+    loadVacations();
 
     return () => {
-      loadRequestIdRef.current += 1;
+      vacationsRequestIdRef.current += 1;
     };
-  }, [loadDashboard]);
+  }, [loadVacations]);
 
-  const cards = getDashboardKpiCards(overview);
-  const alerts = getDashboardAlerts(overview);
-  const studentsOnLeave = getStudentsOnLeaveToday(overview);
-  const formattedDate = formatDashboardDate(overview?.date);
+  useEffect(() => {
+    loadPrayers(prayerPeriod);
+
+    return () => {
+      prayersRequestIdRef.current += 1;
+    };
+  }, [loadPrayers, prayerPeriod]);
+
+  useEffect(() => {
+    loadLessons(lessonPeriod);
+
+    return () => {
+      lessonsRequestIdRef.current += 1;
+    };
+  }, [loadLessons, lessonPeriod]);
 
   return (
     <div className="flex min-h-full flex-1 bg-background p-4 md:p-8">
-      <section className="mx-auto flex w-full max-w-6xl flex-col">
+      <section className="mx-auto flex w-full min-w-0 max-w-6xl flex-col">
         <header className="mb-6">
           <h1 className="text-xl font-semibold text-foreground">לוח בקרה</h1>
           <p className="mt-1 text-sm text-muted">
-            {formattedDate
-              ? `תמונת מצב יומית ל${formattedDate}.`
-              : 'תמונת מצב יומית לקבלת החלטות מהירה.'}
+            {user?.firstName
+              ? `שלום ${user.firstName}, כאן מוצגת תמונת מצב כלל-ישיבתית של חופשות ונוכחות.`
+              : 'תמונת מצב כלל-ישיבתית של חופשות ונוכחות.'}
           </p>
         </header>
 
-        {loadError ? (
-          <div className="mb-4 flex flex-col items-start gap-3">
-            <Alert>{loadError}</Alert>
-            <Button type="button" variant="secondary" fullWidth={false} onClick={loadDashboard}>
-              נסה שוב
-            </Button>
-          </div>
-        ) : null}
+        <div className="flex flex-col gap-4">
+          {isVacationsLoading && isPrayersLoading && isLessonsLoading ? (
+            <ManagementDashboardSkeleton />
+          ) : (
+            <>
+              {vacationsError ? (
+                <div className="flex w-full max-w-md flex-col items-start gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm">
+                  <Alert>{vacationsError}</Alert>
+                  <Button type="button" variant="secondary" fullWidth={false} onClick={loadVacations}>
+                    נסה שוב
+                  </Button>
+                </div>
+              ) : isVacationsLoading ? (
+                <div className="w-full max-w-md">
+                  <VacationWidgetSkeleton />
+                </div>
+              ) : (
+                <div className="w-full max-w-md">
+                  <VacationsTodayWidget stats={vacations} />
+                </div>
+              )}
 
-        {isLoading ? (
-          <>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: KPI_SKELETON_COUNT }, (_, index) => (
-                <KPICardSkeleton key={index} />
-              ))}
-            </div>
-            <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
-              <div className="xl:col-span-2">
-                <AlertListSkeleton rows={3} />
-              </div>
-              <AlertListSkeleton rows={4} />
-            </div>
-          </>
-        ) : null}
-
-        {!isLoading && !loadError ? (
-          <>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {cards.map((card) => (
-                <KPICard
-                  key={card.id}
-                  title={card.title}
-                  value={card.value}
-                  icon={card.icon}
-                  tone={card.tone}
-                  hint={card.hint}
-                />
-              ))}
-            </div>
-
-            <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
-              <div className="xl:col-span-2">
-                <OpenTasksList alerts={alerts} />
-              </div>
-              <LeavesTodayList
-                students={studentsOnLeave}
-                count={Number(overview?.leaves?.count) || 0}
+              <AttendanceTrendCard
+                title="נוכחות תפילות"
+                description="אחוז נוכחות משוקלל בתפילות"
+                period={prayerPeriod}
+                onPeriodChange={setPrayerPeriod}
+                overview={prayers}
+                isLoading={isPrayersLoading}
+                loadError={prayersError}
+                onRetry={() => loadPrayers(prayerPeriod)}
+                periodAriaLabel="טווח תצוגת נוכחות תפילות"
               />
-            </div>
-          </>
-        ) : null}
+
+              <AttendanceTrendCard
+                title="נוכחות שיעורים"
+                description="אחוז נוכחות משוקלל בכלל השיעורים בישיבה"
+                period={lessonPeriod}
+                onPeriodChange={setLessonPeriod}
+                overview={lessons}
+                isLoading={isLessonsLoading}
+                loadError={lessonsError}
+                onRetry={() => loadLessons(lessonPeriod)}
+                periodAriaLabel="טווח תצוגת נוכחות שיעורים"
+              />
+            </>
+          )}
+        </div>
       </section>
     </div>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <RequireAuth allowedRoles={[...SENIOR_MANAGEMENT_ROLES]}>
+      <ManagementDashboardView />
+    </RequireAuth>
   );
 }
