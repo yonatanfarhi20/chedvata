@@ -58,14 +58,30 @@ export function formatAttendancePercent(value) {
   return percent == null ? '—' : `${percent}%`;
 }
 
-export function getChartPoints(points) {
-  return (Array.isArray(points) ? points : []).map((point) => ({
-    key: point.key,
-    label: point.label || point.key,
-    percentage: toPercent(point.percentage),
-    present: toCount(point.present),
-    late: toCount(point.late),
-    absent: toCount(point.absent),
-    counted: toCount(point.counted),
-  }));
+export function getMonthNumberLabel(key) {
+  const month = Number(String(key || '').split('-')[1]);
+  return Number.isFinite(month) && month >= 1 && month <= 12 ? String(month) : '';
+}
+
+export function getChartPoints(points, period) {
+  return (Array.isArray(points) ? points : [])
+    .map((point) => {
+      const percentage = toPercent(point.percentage);
+      const counted = toCount(point.counted);
+
+      return {
+        key: point.key,
+        label: point.label || point.key,
+        tickLabel:
+          period === DASHBOARD_PERIOD.YEAR
+            ? getMonthNumberLabel(point.key) || point.label || point.key
+            : point.label || point.key,
+        percentage,
+        present: toCount(point.present),
+        late: toCount(point.late),
+        absent: toCount(point.absent),
+        counted,
+      };
+    })
+    .filter((point) => point.percentage != null && point.counted > 0);
 }
