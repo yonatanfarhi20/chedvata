@@ -20,7 +20,11 @@ profileRouter.put('/', profileController.updateProfile);
 profileRouter.put('/password', profileController.updatePassword);
 router.use('/profile', profileRouter);
 
-router.get('/dashboard', dashboardController.getDashboard);
+router.get(
+  '/dashboard',
+  roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
+  dashboardController.getDashboard,
+);
 
 router.get(
   '/users/pending',
