@@ -219,6 +219,57 @@ function aggregateLeaves(today) {
   ]);
 }
 
+function getLeavePercentage(onLeaveCount, activeStudentCount) {
+  if (activeStudentCount === 0) {
+    return null;
+  }
+
+  return Math.round((onLeaveCount / activeStudentCount) * 100);
+}
+
+async function getDailyVacations() {
+  const { start: today } = getTodayRange();
+
+  const [activeStudentCount, leaveRows] = await Promise.all([
+    User.countDocuments({ role: USER_ROLE.STUDENT, status: USER_STATUS.ACTIVE }),
+    Vacation.aggregate([
+      {
+        $match: {
+          status: VACATION_STATUS.APPROVED,
+          startDate: { $lte: today },
+          endDate: { $gte: today },
+        },
+      },
+      { $group: { _id: '$studentId' } },
+      {
+        $lookup: {
+          from: User.collection.name,
+          localField: '_id',
+          foreignField: '_id',
+          as: 'student',
+        },
+      },
+      { $unwind: { path: '$student', preserveNullAndEmptyArrays: false } },
+      {
+        $match: {
+          'student.role': USER_ROLE.STUDENT,
+          'student.status': USER_STATUS.ACTIVE,
+        },
+      },
+      { $count: 'count' },
+    ]),
+  ]);
+
+  const onLeaveCount = Number(leaveRows[0]?.count) || 0;
+
+  return {
+    date: today,
+    onLeaveCount,
+    activeStudentCount,
+    percentage: getLeavePercentage(onLeaveCount, activeStudentCount),
+  };
+}
+
 async function getDashboardOverview() {
   const { start: today } = getTodayRange();
 
@@ -261,6 +312,7 @@ async function getDashboardOverview() {
 }
 
 module.exports = {
+  getDailyVacations,
   getDashboardOverview,
   getTodayRange,
 };

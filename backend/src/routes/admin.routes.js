@@ -21,6 +21,11 @@ profileRouter.put('/password', profileController.updatePassword);
 router.use('/profile', profileRouter);
 
 router.get(
+  '/dashboard/vacations',
+  roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
+  dashboardController.getDailyVacations,
+);
+router.get(
   '/dashboard',
   roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
   dashboardController.getDashboard,

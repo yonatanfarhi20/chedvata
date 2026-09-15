@@ -6,6 +6,13 @@ async function getDashboard(_req, res) {
   return res.status(200).json(overview);
 }
 
+async function getDailyVacations(_req, res) {
+  const overview = await dashboardService.getDailyVacations();
+
+  return res.status(200).json(overview);
+}
+
 module.exports = {
   getDashboard,
+  getDailyVacations,
 };
