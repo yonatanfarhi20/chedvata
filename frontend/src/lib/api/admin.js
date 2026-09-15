@@ -8,6 +8,17 @@ export function getDailyVacations() {
   return apiRequest('/api/admin/dashboard/vacations');
 }
 
+export function getPrayerAttendance(period) {
+  const params = new URLSearchParams();
+
+  if (period) {
+    params.set('period', period);
+  }
+
+  const query = params.toString();
+  return apiRequest(`/api/admin/dashboard/prayers${query ? `?${query}` : ''}`);
+}
+
 export function getPendingUsers() {
   return apiRequest('/api/admin/users/pending');
 }

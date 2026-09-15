@@ -1,12 +1,13 @@
 import { DASHBOARD_PERIOD_OPTIONS } from '@/lib/rabbi/dashboard';
 
-export default function PeriodToggle({ value, onChange, disabled = false }) {
+export default function PeriodToggle({
+  value,
+  onChange,
+  disabled = false,
+  ariaLabel = 'טווח תצוגת הנוכחות',
+}) {
   return (
-    <div
-      role="radiogroup"
-      aria-label="טווח תצוגת הנוכחות"
-      className="inline-flex rounded-xl border border-border bg-background p-1"
-    >
+    <div role="radiogroup" aria-label={ariaLabel} className="inline-flex rounded-xl border border-border bg-background p-1">
       {DASHBOARD_PERIOD_OPTIONS.map((option) => {
         const isSelected = value === option.value;
 

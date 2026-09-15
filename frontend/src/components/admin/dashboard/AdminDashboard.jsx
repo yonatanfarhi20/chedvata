@@ -1,40 +1,63 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import ManagementDashboardSkeleton from '@/components/admin/dashboard/ManagementDashboardSkeleton';
+import AttendanceTrendCard from '@/components/admin/dashboard/AttendanceTrendCard';
 import VacationsTodayWidget from '@/components/admin/dashboard/VacationsTodayWidget';
 import RequireAuth from '@/components/auth/RequireAuth';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
-import { getVacationsToday, EMPTY_VACATIONS_TODAY } from '@/lib/admin/managementDashboard';
-import { getDailyVacations } from '@/lib/api/admin';
+import {
+  EMPTY_ATTENDANCE_TREND,
+  EMPTY_VACATIONS_TODAY,
+  getAttendanceTrendOverview,
+  getVacationsToday,
+} from '@/lib/admin/managementDashboard';
+import { getDailyVacations, getPrayerAttendance } from '@/lib/api/admin';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 import { SENIOR_MANAGEMENT_ROLES } from '@/lib/auth/constants';
 import { useSession } from '@/lib/auth/session';
+import { DASHBOARD_PERIOD } from '@/lib/rabbi/dashboard';
+
+function VacationWidgetSkeleton() {
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5 shadow-sm" aria-hidden="true">
+      <div className="h-4 w-28 animate-pulse rounded bg-border" />
+      <div className="mt-2 h-3 w-48 animate-pulse rounded bg-border" />
+      <div className="mt-6 h-12 w-20 animate-pulse rounded bg-border" />
+      <div className="mt-3 h-3 w-36 animate-pulse rounded bg-border" />
+    </section>
+  );
+}
 
 function ManagementDashboardView() {
   const user = useSession()?.user;
   const [vacations, setVacations] = useState(EMPTY_VACATIONS_TODAY);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
-  const loadRequestIdRef = useRef(0);
+  const [isVacationsLoading, setIsVacationsLoading] = useState(true);
+  const [vacationsError, setVacationsError] = useState('');
+  const vacationsRequestIdRef = useRef(0);
 
-  const loadDashboard = useCallback(async () => {
-    const requestId = loadRequestIdRef.current + 1;
-    loadRequestIdRef.current = requestId;
-    setIsLoading(true);
-    setLoadError('');
+  const [prayerPeriod, setPrayerPeriod] = useState(DASHBOARD_PERIOD.WEEK);
+  const [prayers, setPrayers] = useState(EMPTY_ATTENDANCE_TREND);
+  const [isPrayersLoading, setIsPrayersLoading] = useState(true);
+  const [prayersError, setPrayersError] = useState('');
+  const prayersRequestIdRef = useRef(0);
+
+  const loadVacations = useCallback(async () => {
+    const requestId = vacationsRequestIdRef.current + 1;
+    vacationsRequestIdRef.current = requestId;
+    setIsVacationsLoading(true);
+    setVacationsError('');
 
     try {
       const data = await getDailyVacations();
 
-      if (requestId !== loadRequestIdRef.current) {
+      if (requestId !== vacationsRequestIdRef.current) {
         return;
       }
 
       setVacations(getVacationsToday(data));
     } catch (error) {
-      if (requestId !== loadRequestIdRef.current) {
+      if (requestId !== vacationsRequestIdRef.current) {
         return;
       }
 
@@ -43,21 +66,61 @@ function ManagementDashboardView() {
       }
 
       setVacations(EMPTY_VACATIONS_TODAY);
-      setLoadError(getErrorMessage(error, 'לא ניתן לטעון את נתוני לוח הבקרה.'));
+      setVacationsError(getErrorMessage(error, 'לא ניתן לטעון את נתוני החופשות.'));
     } finally {
-      if (requestId === loadRequestIdRef.current) {
-        setIsLoading(false);
+      if (requestId === vacationsRequestIdRef.current) {
+        setIsVacationsLoading(false);
+      }
+    }
+  }, []);
+
+  const loadPrayers = useCallback(async (selectedPeriod) => {
+    const requestId = prayersRequestIdRef.current + 1;
+    prayersRequestIdRef.current = requestId;
+    setIsPrayersLoading(true);
+    setPrayersError('');
+
+    try {
+      const data = await getPrayerAttendance(selectedPeriod);
+
+      if (requestId !== prayersRequestIdRef.current) {
+        return;
+      }
+
+      setPrayers(getAttendanceTrendOverview(data));
+    } catch (error) {
+      if (requestId !== prayersRequestIdRef.current) {
+        return;
+      }
+
+      if (error instanceof ApiError && error.status === 401) {
+        return;
+      }
+
+      setPrayers(EMPTY_ATTENDANCE_TREND);
+      setPrayersError(getErrorMessage(error, 'לא ניתן לטעון את נוכחות התפילות.'));
+    } finally {
+      if (requestId === prayersRequestIdRef.current) {
+        setIsPrayersLoading(false);
       }
     }
   }, []);
 
   useEffect(() => {
-    loadDashboard();
+    loadVacations();
 
     return () => {
-      loadRequestIdRef.current += 1;
+      vacationsRequestIdRef.current += 1;
     };
-  }, [loadDashboard]);
+  }, [loadVacations]);
+
+  useEffect(() => {
+    loadPrayers(prayerPeriod);
+
+    return () => {
+      prayersRequestIdRef.current += 1;
+    };
+  }, [loadPrayers, prayerPeriod]);
 
   return (
     <div className="flex min-h-full flex-1 bg-background p-4 md:p-8">
@@ -71,32 +134,37 @@ function ManagementDashboardView() {
           </p>
         </header>
 
-        {loadError ? (
-          <div className="mb-4 flex flex-col items-start gap-3">
-            <Alert>{loadError}</Alert>
-            <Button type="button" variant="secondary" fullWidth={false} onClick={loadDashboard}>
-              נסה שוב
-            </Button>
-          </div>
-        ) : null}
-
-        {isLoading ? <ManagementDashboardSkeleton /> : null}
-
-        {!isLoading && !loadError ? (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {vacationsError ? (
+            <div className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm">
+              <Alert>{vacationsError}</Alert>
+              <Button type="button" variant="secondary" fullWidth={false} onClick={loadVacations}>
+                נסה שוב
+              </Button>
+            </div>
+          ) : isVacationsLoading ? (
+            <VacationWidgetSkeleton />
+          ) : (
             <VacationsTodayWidget stats={vacations} />
+          )}
 
-            <section className="min-h-[320px] rounded-2xl border border-dashed border-border bg-card p-5 shadow-sm lg:col-span-3">
-              <h2 className="text-base font-semibold text-foreground">נוכחות תפילות</h2>
-              <p className="mt-1 text-sm text-muted">גרף קווי לפי שבוע, חודש ושנה.</p>
-            </section>
+          <AttendanceTrendCard
+            title="נוכחות תפילות"
+            description="אחוז נוכחות משוקלל בתפילות"
+            period={prayerPeriod}
+            onPeriodChange={setPrayerPeriod}
+            overview={prayers}
+            isLoading={isPrayersLoading}
+            loadError={prayersError}
+            onRetry={() => loadPrayers(prayerPeriod)}
+            periodAriaLabel="טווח תצוגת נוכחות תפילות"
+          />
 
-            <section className="min-h-[320px] rounded-2xl border border-dashed border-border bg-card p-5 shadow-sm lg:col-span-3">
-              <h2 className="text-base font-semibold text-foreground">נוכחות שיעורים</h2>
-              <p className="mt-1 text-sm text-muted">גרף קווי לכלל השיעורים בישיבה.</p>
-            </section>
-          </div>
-        ) : null}
+          <section className="min-h-[320px] rounded-2xl border border-dashed border-border bg-card p-5 shadow-sm lg:col-span-3">
+            <h2 className="text-base font-semibold text-foreground">נוכחות שיעורים</h2>
+            <p className="mt-1 text-sm text-muted">גרף קווי לכלל השיעורים בישיבה.</p>
+          </section>
+        </div>
       </section>
     </div>
   );
