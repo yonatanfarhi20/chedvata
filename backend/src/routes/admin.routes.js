@@ -31,6 +31,11 @@ router.get(
   dashboardController.getPrayerAttendance,
 );
 router.get(
+  '/dashboard/lessons',
+  roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
+  dashboardController.getLessonAttendance,
+);
+router.get(
   '/dashboard',
   roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
   dashboardController.getDashboard,

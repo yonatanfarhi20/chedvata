@@ -20,8 +20,16 @@ async function getPrayerAttendance(req, res) {
   return res.status(200).json(overview);
 }
 
+async function getLessonAttendance(req, res) {
+  const query = parseDashboardPeriodQuery(req.query);
+  const overview = await dashboardService.getLessonAttendanceTrend(query);
+
+  return res.status(200).json(overview);
+}
+
 module.exports = {
   getDashboard,
   getDailyVacations,
   getPrayerAttendance,
+  getLessonAttendance,
 };

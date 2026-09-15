@@ -274,10 +274,10 @@ async function getDailyVacations() {
   };
 }
 
-async function getPrayerAttendanceTrend({ period } = {}) {
+async function getYeshivaAttendanceTrend({ activityType, period } = {}) {
   const [trend, activeStudentCount] = await Promise.all([
     getAttendanceTrend({
-      activityType: ACTIVITY_TYPE.PRAYER,
+      activityType,
       period,
       weights: WEIGHTED_ATTENDANCE_WEIGHTS,
     }),
@@ -288,6 +288,20 @@ async function getPrayerAttendanceTrend({ period } = {}) {
     ...trend,
     studentCount: activeStudentCount,
   };
+}
+
+async function getPrayerAttendanceTrend({ period } = {}) {
+  return getYeshivaAttendanceTrend({
+    activityType: ACTIVITY_TYPE.PRAYER,
+    period,
+  });
+}
+
+async function getLessonAttendanceTrend({ period } = {}) {
+  return getYeshivaAttendanceTrend({
+    activityType: ACTIVITY_TYPE.LESSON,
+    period,
+  });
 }
 
 async function getDashboardOverview() {
@@ -334,6 +348,7 @@ async function getDashboardOverview() {
 module.exports = {
   getDailyVacations,
   getPrayerAttendanceTrend,
+  getLessonAttendanceTrend,
   getDashboardOverview,
   getTodayRange,
 };
