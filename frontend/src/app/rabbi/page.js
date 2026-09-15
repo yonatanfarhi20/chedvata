@@ -1,9 +1,9 @@
-import DashboardHome from '@/components/dashboard/DashboardHome';
+import RabbiDashboard from '@/components/rabbi/dashboard/RabbiDashboard';
 
 export const metadata = {
-  title: 'אזור רב | ישיבת חדוותא',
+  title: 'לוח בקרה | ישיבת חדוותא',
 };
 
 export default function RabbiDashboardPage() {
-  return <DashboardHome title="אזור רב כיתה" />;
+  return <RabbiDashboard />;
 }
