@@ -1,5 +1,16 @@
 import { apiRequest } from '@/lib/api/client';
 
+function getDashboardTrend(path, period) {
+  const params = new URLSearchParams();
+
+  if (period) {
+    params.set('period', period);
+  }
+
+  const query = params.toString();
+  return apiRequest(`${path}${query ? `?${query}` : ''}`);
+}
+
 export function getDashboard() {
   return apiRequest('/api/admin/dashboard');
 }
@@ -9,25 +20,11 @@ export function getDailyVacations() {
 }
 
 export function getPrayerAttendance(period) {
-  const params = new URLSearchParams();
-
-  if (period) {
-    params.set('period', period);
-  }
-
-  const query = params.toString();
-  return apiRequest(`/api/admin/dashboard/prayers${query ? `?${query}` : ''}`);
+  return getDashboardTrend('/api/admin/dashboard/prayers', period);
 }
 
 export function getLessonAttendance(period) {
-  const params = new URLSearchParams();
-
-  if (period) {
-    params.set('period', period);
-  }
-
-  const query = params.toString();
-  return apiRequest(`/api/admin/dashboard/lessons${query ? `?${query}` : ''}`);
+  return getDashboardTrend('/api/admin/dashboard/lessons', period);
 }
 
 export function getPendingUsers() {

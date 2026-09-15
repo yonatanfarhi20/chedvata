@@ -22,11 +22,14 @@ export default function VacationsTodayWidget({ stats }) {
       <p className="mt-1 text-sm font-medium text-muted">
         {onLeaveCount === 1 ? 'תלמיד בחופשה' : 'תלמידים בחופשה'}
       </p>
-      <p className="mt-4 text-sm text-muted">
-        {activeStudentCount === 0
-          ? 'אין תלמידים פעילים לחישוב אחוז.'
-          : `${percentageLabel} מתוך ${activeStudentCount} תלמידים פעילים בישיבה.`}
+      <p className="mt-4 inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
+        {activeStudentCount === 0 ? 'אין תלמידים פעילים' : `${percentageLabel} מכלל התלמידים`}
       </p>
+      {activeStudentCount > 0 ? (
+        <p className="mt-2 text-sm text-muted">
+          {onLeaveCount} מתוך {activeStudentCount} תלמידים פעילים בישיבה.
+        </p>
+      ) : null}
     </article>
   );
 }

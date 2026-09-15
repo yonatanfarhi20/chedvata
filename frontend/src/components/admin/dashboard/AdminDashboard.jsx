@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AttendanceTrendCard from '@/components/admin/dashboard/AttendanceTrendCard';
+import ManagementDashboardSkeleton from '@/components/admin/dashboard/ManagementDashboardSkeleton';
 import VacationsTodayWidget from '@/components/admin/dashboard/VacationsTodayWidget';
 import RequireAuth from '@/components/auth/RequireAuth';
 import Alert from '@/components/ui/Alert';
@@ -170,7 +171,7 @@ function ManagementDashboardView() {
 
   return (
     <div className="flex min-h-full flex-1 bg-background p-4 md:p-8">
-      <section className="mx-auto flex w-full max-w-6xl flex-col">
+      <section className="mx-auto flex w-full min-w-0 max-w-6xl flex-col">
         <header className="mb-6">
           <h1 className="text-xl font-semibold text-foreground">לוח בקרה</h1>
           <p className="mt-1 text-sm text-muted">
@@ -180,43 +181,53 @@ function ManagementDashboardView() {
           </p>
         </header>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          {vacationsError ? (
-            <div className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm">
-              <Alert>{vacationsError}</Alert>
-              <Button type="button" variant="secondary" fullWidth={false} onClick={loadVacations}>
-                נסה שוב
-              </Button>
-            </div>
-          ) : isVacationsLoading ? (
-            <VacationWidgetSkeleton />
+        <div className="flex flex-col gap-4">
+          {isVacationsLoading && isPrayersLoading && isLessonsLoading ? (
+            <ManagementDashboardSkeleton />
           ) : (
-            <VacationsTodayWidget stats={vacations} />
+            <>
+              {vacationsError ? (
+                <div className="flex w-full max-w-md flex-col items-start gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm">
+                  <Alert>{vacationsError}</Alert>
+                  <Button type="button" variant="secondary" fullWidth={false} onClick={loadVacations}>
+                    נסה שוב
+                  </Button>
+                </div>
+              ) : isVacationsLoading ? (
+                <div className="w-full max-w-md">
+                  <VacationWidgetSkeleton />
+                </div>
+              ) : (
+                <div className="w-full max-w-md">
+                  <VacationsTodayWidget stats={vacations} />
+                </div>
+              )}
+
+              <AttendanceTrendCard
+                title="נוכחות תפילות"
+                description="אחוז נוכחות משוקלל בתפילות"
+                period={prayerPeriod}
+                onPeriodChange={setPrayerPeriod}
+                overview={prayers}
+                isLoading={isPrayersLoading}
+                loadError={prayersError}
+                onRetry={() => loadPrayers(prayerPeriod)}
+                periodAriaLabel="טווח תצוגת נוכחות תפילות"
+              />
+
+              <AttendanceTrendCard
+                title="נוכחות שיעורים"
+                description="אחוז נוכחות משוקלל בכלל השיעורים בישיבה"
+                period={lessonPeriod}
+                onPeriodChange={setLessonPeriod}
+                overview={lessons}
+                isLoading={isLessonsLoading}
+                loadError={lessonsError}
+                onRetry={() => loadLessons(lessonPeriod)}
+                periodAriaLabel="טווח תצוגת נוכחות שיעורים"
+              />
+            </>
           )}
-
-          <AttendanceTrendCard
-            title="נוכחות תפילות"
-            description="אחוז נוכחות משוקלל בתפילות"
-            period={prayerPeriod}
-            onPeriodChange={setPrayerPeriod}
-            overview={prayers}
-            isLoading={isPrayersLoading}
-            loadError={prayersError}
-            onRetry={() => loadPrayers(prayerPeriod)}
-            periodAriaLabel="טווח תצוגת נוכחות תפילות"
-          />
-
-          <AttendanceTrendCard
-            title="נוכחות שיעורים"
-            description="אחוז נוכחות משוקלל בכלל השיעורים בישיבה"
-            period={lessonPeriod}
-            onPeriodChange={setLessonPeriod}
-            overview={lessons}
-            isLoading={isLessonsLoading}
-            loadError={lessonsError}
-            onRetry={() => loadLessons(lessonPeriod)}
-            periodAriaLabel="טווח תצוגת נוכחות שיעורים"
-          />
         </div>
       </section>
     </div>

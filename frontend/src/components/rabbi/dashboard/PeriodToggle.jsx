@@ -7,7 +7,7 @@ export default function PeriodToggle({
   ariaLabel = 'טווח תצוגת הנוכחות',
 }) {
   return (
-    <div role="radiogroup" aria-label={ariaLabel} className="inline-flex rounded-xl border border-border bg-background p-1">
+    <div role="radiogroup" aria-label={ariaLabel} className="inline-flex max-w-full flex-wrap rounded-xl border border-border bg-background p-1">
       {DASHBOARD_PERIOD_OPTIONS.map((option) => {
         const isSelected = value === option.value;
 
@@ -19,7 +19,7 @@ export default function PeriodToggle({
             aria-checked={isSelected}
             disabled={disabled}
             onClick={() => onChange(option.value)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+            className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
               isSelected ? 'bg-primary text-white' : 'text-muted hover:bg-card hover:text-foreground'
             }`}
           >

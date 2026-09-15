@@ -20,7 +20,7 @@ export default function AttendanceTrendCard({
   const titleLabel = overview?.title ? ` · ${overview.title}` : '';
 
   return (
-    <section className="flex min-h-[420px] flex-col rounded-2xl border border-border bg-card p-5 shadow-sm lg:col-span-3">
+    <section className="flex min-h-[420px] w-full min-w-0 flex-col rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
       <header className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-base font-semibold text-foreground">{title}</h2>

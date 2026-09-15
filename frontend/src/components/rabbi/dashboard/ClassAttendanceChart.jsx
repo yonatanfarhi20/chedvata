@@ -12,7 +12,7 @@ import { DASHBOARD_PERIOD, formatAttendancePercent, getChartPoints } from '@/lib
 const LINE_COLOR = '#1e3a5f';
 const GRID_COLOR = '#d6d3d1';
 
-function AttendanceTooltip({ active, payload }) {
+function AttendanceTooltip({ active, payload, period }) {
   if (!active || !payload?.length) {
     return null;
   }
@@ -23,6 +23,9 @@ function AttendanceTooltip({ active, payload }) {
     return null;
   }
 
+  const emptyLabel =
+    period === DASHBOARD_PERIOD.YEAR ? 'אין דיווח לחודש זה' : 'אין דיווח ליום זה';
+
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2 text-sm shadow-md" dir="rtl">
       <p className="font-semibold text-foreground">{point.label}</p>
@@ -32,7 +35,7 @@ function AttendanceTooltip({ active, payload }) {
           נוכחים {point.present} · מאחרים {point.late} · חסרים {point.absent}
         </p>
       ) : (
-        <p className="mt-1 text-xs text-muted">אין דיווח ליום זה</p>
+        <p className="mt-1 text-xs text-muted">{emptyLabel}</p>
       )}
     </div>
   );
@@ -77,7 +80,7 @@ export default function ClassAttendanceChart({ points, period }) {
             axisLine={false}
             width={52}
           />
-          <Tooltip content={<AttendanceTooltip />} />
+          <Tooltip content={<AttendanceTooltip period={period} />} />
           <Line
             type="monotone"
             dataKey="percentage"
