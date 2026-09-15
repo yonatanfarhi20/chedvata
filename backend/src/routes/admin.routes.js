@@ -26,6 +26,11 @@ router.get(
   dashboardController.getDailyVacations,
 );
 router.get(
+  '/dashboard/prayers',
+  roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
+  dashboardController.getPrayerAttendance,
+);
+router.get(
   '/dashboard',
   roleMiddleware([...SENIOR_MANAGEMENT_ROLES]),
   dashboardController.getDashboard,

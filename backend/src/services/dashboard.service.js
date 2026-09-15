@@ -3,6 +3,10 @@ const Vacation = require('../models/Vacation.model');
 const User = require('../models/User');
 const { ATTENDANCE_STATUS, ACTIVITY_TYPE } = require('../constants/attendance');
 const {
+  WEIGHTED_ATTENDANCE_WEIGHTS,
+  getAttendanceTrend,
+} = require('./attendanceTrend.service');
+const {
   DASHBOARD_ALERT_HREF,
   DASHBOARD_ALERT_TYPE,
   LEAVES_PREVIEW_LIMIT,
@@ -270,6 +274,22 @@ async function getDailyVacations() {
   };
 }
 
+async function getPrayerAttendanceTrend({ period } = {}) {
+  const [trend, activeStudentCount] = await Promise.all([
+    getAttendanceTrend({
+      activityType: ACTIVITY_TYPE.PRAYER,
+      period,
+      weights: WEIGHTED_ATTENDANCE_WEIGHTS,
+    }),
+    User.countDocuments({ role: USER_ROLE.STUDENT, status: USER_STATUS.ACTIVE }),
+  ]);
+
+  return {
+    ...trend,
+    studentCount: activeStudentCount,
+  };
+}
+
 async function getDashboardOverview() {
   const { start: today } = getTodayRange();
 
@@ -313,6 +333,7 @@ async function getDashboardOverview() {
 
 module.exports = {
   getDailyVacations,
+  getPrayerAttendanceTrend,
   getDashboardOverview,
   getTodayRange,
 };
