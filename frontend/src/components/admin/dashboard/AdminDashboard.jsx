@@ -12,7 +12,7 @@ import {
   getAttendanceTrendOverview,
   getVacationsToday,
 } from '@/lib/admin/managementDashboard';
-import { getDailyVacations, getPrayerAttendance } from '@/lib/api/admin';
+import { getDailyVacations, getLessonAttendance, getPrayerAttendance } from '@/lib/api/admin';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 import { SENIOR_MANAGEMENT_ROLES } from '@/lib/auth/constants';
 import { useSession } from '@/lib/auth/session';
@@ -41,6 +41,12 @@ function ManagementDashboardView() {
   const [isPrayersLoading, setIsPrayersLoading] = useState(true);
   const [prayersError, setPrayersError] = useState('');
   const prayersRequestIdRef = useRef(0);
+
+  const [lessonPeriod, setLessonPeriod] = useState(DASHBOARD_PERIOD.WEEK);
+  const [lessons, setLessons] = useState(EMPTY_ATTENDANCE_TREND);
+  const [isLessonsLoading, setIsLessonsLoading] = useState(true);
+  const [lessonsError, setLessonsError] = useState('');
+  const lessonsRequestIdRef = useRef(0);
 
   const loadVacations = useCallback(async () => {
     const requestId = vacationsRequestIdRef.current + 1;
@@ -106,6 +112,38 @@ function ManagementDashboardView() {
     }
   }, []);
 
+  const loadLessons = useCallback(async (selectedPeriod) => {
+    const requestId = lessonsRequestIdRef.current + 1;
+    lessonsRequestIdRef.current = requestId;
+    setIsLessonsLoading(true);
+    setLessonsError('');
+
+    try {
+      const data = await getLessonAttendance(selectedPeriod);
+
+      if (requestId !== lessonsRequestIdRef.current) {
+        return;
+      }
+
+      setLessons(getAttendanceTrendOverview(data));
+    } catch (error) {
+      if (requestId !== lessonsRequestIdRef.current) {
+        return;
+      }
+
+      if (error instanceof ApiError && error.status === 401) {
+        return;
+      }
+
+      setLessons(EMPTY_ATTENDANCE_TREND);
+      setLessonsError(getErrorMessage(error, 'לא ניתן לטעון את נוכחות השיעורים.'));
+    } finally {
+      if (requestId === lessonsRequestIdRef.current) {
+        setIsLessonsLoading(false);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     loadVacations();
 
@@ -121,6 +159,14 @@ function ManagementDashboardView() {
       prayersRequestIdRef.current += 1;
     };
   }, [loadPrayers, prayerPeriod]);
+
+  useEffect(() => {
+    loadLessons(lessonPeriod);
+
+    return () => {
+      lessonsRequestIdRef.current += 1;
+    };
+  }, [loadLessons, lessonPeriod]);
 
   return (
     <div className="flex min-h-full flex-1 bg-background p-4 md:p-8">
@@ -160,10 +206,17 @@ function ManagementDashboardView() {
             periodAriaLabel="טווח תצוגת נוכחות תפילות"
           />
 
-          <section className="min-h-[320px] rounded-2xl border border-dashed border-border bg-card p-5 shadow-sm lg:col-span-3">
-            <h2 className="text-base font-semibold text-foreground">נוכחות שיעורים</h2>
-            <p className="mt-1 text-sm text-muted">גרף קווי לכלל השיעורים בישיבה.</p>
-          </section>
+          <AttendanceTrendCard
+            title="נוכחות שיעורים"
+            description="אחוז נוכחות משוקלל בכלל השיעורים בישיבה"
+            period={lessonPeriod}
+            onPeriodChange={setLessonPeriod}
+            overview={lessons}
+            isLoading={isLessonsLoading}
+            loadError={lessonsError}
+            onRetry={() => loadLessons(lessonPeriod)}
+            periodAriaLabel="טווח תצוגת נוכחות שיעורים"
+          />
         </div>
       </section>
     </div>

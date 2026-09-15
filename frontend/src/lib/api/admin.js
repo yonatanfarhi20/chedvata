@@ -19,6 +19,17 @@ export function getPrayerAttendance(period) {
   return apiRequest(`/api/admin/dashboard/prayers${query ? `?${query}` : ''}`);
 }
 
+export function getLessonAttendance(period) {
+  const params = new URLSearchParams();
+
+  if (period) {
+    params.set('period', period);
+  }
+
+  const query = params.toString();
+  return apiRequest(`/api/admin/dashboard/lessons${query ? `?${query}` : ''}`);
+}
+
 export function getPendingUsers() {
   return apiRequest('/api/admin/users/pending');
 }
