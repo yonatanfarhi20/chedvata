@@ -37,6 +37,23 @@ export function TrashIcon() {
   );
 }
 
+export function ChevronDownIcon({ className = 'h-3 w-3' }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+
 export function SortIcon({ direction }) {
   return (
     <svg
