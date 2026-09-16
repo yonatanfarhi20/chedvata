@@ -25,15 +25,6 @@ export function MenuIcon() {
   );
 }
 
-export function SearchIcon() {
-  return (
-    <Icon className="h-4 w-4 shrink-0">
-      <circle cx="11" cy="11" r="7" />
-      <path d="M20 20l-3.5-3.5" />
-    </Icon>
-  );
-}
-
 export function ChevronDownIcon({ className = 'h-4 w-4 shrink-0' }) {
   return (
     <Icon className={className}>

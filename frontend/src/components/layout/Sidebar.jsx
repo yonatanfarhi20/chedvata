@@ -44,11 +44,10 @@ export default function Sidebar({ isOpen = false, closeSidebar, items }) {
         }`}
         aria-label="תפריט ניווט ראשי"
       >
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
-          <p className="text-lg font-bold tracking-wide">ישיבת חדוותא</p>
+        <div className="flex items-center justify-end px-5 py-3 lg:hidden">
           <button
             type="button"
-            className="rounded-lg p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white lg:hidden"
+            className="rounded-lg p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
             onClick={() => closeSidebar?.()}
             aria-label="סגור תפריט ניווט"
           >
