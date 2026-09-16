@@ -1,4 +1,4 @@
-import { USER_ROLE, USER_STATUS } from '@/lib/auth/constants';
+import { ADMIN_ROLES, USER_ROLE, USER_STATUS } from '@/lib/auth/constants';
 
 export const USER_ROLE_LABELS = Object.freeze({
   [USER_ROLE.STUDENT]: 'תלמיד',
@@ -89,4 +89,16 @@ export function matchesUserSearch(user, query) {
   const idNumber = String(user?.idNumber || '').toLowerCase();
 
   return fullName.includes(normalized) || idNumber.includes(normalized);
+}
+
+export function isStudentUser(user) {
+  return user?.role === USER_ROLE.STUDENT;
+}
+
+export function isStaffUser(user) {
+  return ADMIN_ROLES.includes(user?.role);
+}
+
+export function isPendingApprovalStatus(status) {
+  return status === USER_STATUS.PENDING_ADMIN_APPROVAL;
 }

@@ -2,37 +2,46 @@
 
 import { useMemo, useState } from 'react';
 import UserRowActions from '@/components/admin/users/UserRowActions';
+import UserStatusBadge from '@/components/admin/users/UserStatusBadge';
 import { SortIcon } from '@/components/admin/users/UserTableIcons';
 import {
   USER_ROLE_LABELS,
-  USER_STATUS_LABELS,
   formatClassAffiliation,
   getUserFullName,
+  isPendingApprovalStatus,
 } from '@/lib/admin/users';
-import { USER_STATUS } from '@/lib/auth/constants';
 
-const COLUMNS = [
-  {
+const COLUMN_DEFINITIONS = Object.freeze({
+  name: {
     key: 'name',
     label: 'שם',
     sortValue: (user) => getUserFullName(user).toLowerCase(),
   },
-  {
+  idNumber: {
     key: 'idNumber',
     label: 'תעודת זהות',
     sortValue: (user) => String(user.idNumber || ''),
   },
-  {
+  classId: {
     key: 'classId',
     label: 'שיוך כיתתי',
     sortValue: (user) => String(user.classId || ''),
   },
-  {
+  status: {
     key: 'status',
     label: 'סטטוס',
     sortValue: (user) => String(user.status || ''),
   },
-];
+});
+
+function getColumns(showClassColumn) {
+  return [
+    COLUMN_DEFINITIONS.name,
+    COLUMN_DEFINITIONS.idNumber,
+    ...(showClassColumn ? [COLUMN_DEFINITIONS.classId] : []),
+    COLUMN_DEFINITIONS.status,
+  ];
+}
 
 function compareUsers(left, right, column, direction) {
   const leftValue = column.sortValue(left);
@@ -42,30 +51,59 @@ function compareUsers(left, right, column, direction) {
   return direction === 'desc' ? -result : result;
 }
 
-function StatusBadge({ status }) {
-  const isActive = status === USER_STATUS.ACTIVE;
-  const isPendingApproval = status === USER_STATUS.PENDING_ADMIN_APPROVAL;
+function UserCell({ columnKey, user, rabbis, canChangeStatus, onStatusClick, actionsDisabled }) {
+  if (columnKey === 'name') {
+    return (
+      <td className="px-4 py-3">
+        <div className="font-medium text-foreground">{getUserFullName(user)}</div>
+        <div className="text-xs text-muted">{USER_ROLE_LABELS[user.role] || user.role || '—'}</div>
+      </td>
+    );
+  }
 
-  const styles = isActive
-    ? 'bg-success/10 text-success'
-    : isPendingApproval
-      ? 'bg-amber-100 text-amber-800'
-      : 'bg-background text-muted';
+  if (columnKey === 'idNumber') {
+    return (
+      <td className="px-4 py-3 font-mono text-foreground" dir="ltr">
+        {user.idNumber || '—'}
+      </td>
+    );
+  }
+
+  if (columnKey === 'classId') {
+    return (
+      <td className="px-4 py-3 text-foreground">{formatClassAffiliation(user.classId, rabbis)}</td>
+    );
+  }
 
   return (
-    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${styles}`}>
-      {USER_STATUS_LABELS[status] || status || '—'}
-    </span>
+    <td className="px-4 py-3">
+      <UserStatusBadge
+        user={user}
+        disabled={actionsDisabled}
+        interactive={canChangeStatus && isPendingApprovalStatus(user.status)}
+        onClick={onStatusClick}
+      />
+    </td>
   );
 }
 
-export default function UsersTable({ users, rabbis = [], onEdit, onDelete, actionsDisabled = false }) {
+export default function UsersTable({
+  users,
+  rabbis = [],
+  showClassColumn = true,
+  canChangeStatus = false,
+  onStatusClick,
+  onEdit,
+  onDelete,
+  actionsDisabled = false,
+}) {
+  const columns = useMemo(() => getColumns(showClassColumn), [showClassColumn]);
   const [sort, setSort] = useState({ key: 'name', direction: 'asc' });
 
   const sortedUsers = useMemo(() => {
-    const column = COLUMNS.find((item) => item.key === sort.key) || COLUMNS[0];
+    const column = columns.find((item) => item.key === sort.key) || columns[0];
     return [...users].sort((left, right) => compareUsers(left, right, column, sort.direction));
-  }, [users, sort]);
+  }, [users, sort, columns]);
 
   function handleSort(key) {
     setSort((current) => {
@@ -82,10 +120,14 @@ export default function UsersTable({ users, rabbis = [], onEdit, onDelete, actio
 
   return (
     <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
-      <table className="w-full min-w-[48rem] border-collapse text-start text-sm">
+      <table
+        className={`w-full border-collapse text-start text-sm ${
+          showClassColumn ? 'min-w-[48rem]' : 'min-w-[36rem]'
+        }`}
+      >
         <thead className="bg-background text-muted">
           <tr>
-            {COLUMNS.map((column) => {
+            {columns.map((column) => {
               const isActive = sort.key === column.key;
 
               return (
@@ -108,19 +150,17 @@ export default function UsersTable({ users, rabbis = [], onEdit, onDelete, actio
         <tbody>
           {sortedUsers.map((user) => (
             <tr key={user._id} className="border-t border-border">
-              <td className="px-4 py-3">
-                <div className="font-medium text-foreground">{getUserFullName(user)}</div>
-                <div className="text-xs text-muted">
-                  {USER_ROLE_LABELS[user.role] || user.role || '—'}
-                </div>
-              </td>
-              <td className="px-4 py-3 font-mono text-foreground" dir="ltr">
-                {user.idNumber || '—'}
-              </td>
-              <td className="px-4 py-3 text-foreground">{formatClassAffiliation(user.classId, rabbis)}</td>
-              <td className="px-4 py-3">
-                <StatusBadge status={user.status} />
-              </td>
+              {columns.map((column) => (
+                <UserCell
+                  key={column.key}
+                  columnKey={column.key}
+                  user={user}
+                  rabbis={rabbis}
+                  canChangeStatus={canChangeStatus}
+                  onStatusClick={onStatusClick}
+                  actionsDisabled={actionsDisabled}
+                />
+              ))}
               <td className="px-4 py-3">
                 <UserRowActions
                   user={user}
