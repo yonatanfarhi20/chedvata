@@ -8,7 +8,11 @@ export const metadata = {
 
 export default function StudentLayout({ children }) {
   return (
-    <AppShell allowedRoles={[USER_ROLE.STUDENT]} navItems={STUDENT_NAV_ITEMS}>
+    <AppShell
+      allowedRoles={[USER_ROLE.STUDENT]}
+      navItems={STUDENT_NAV_ITEMS}
+      profileHref="/dashboard/profile"
+    >
       {children}
     </AppShell>
   );

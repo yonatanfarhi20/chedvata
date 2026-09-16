@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 import TextField from '@/components/ui/TextField';
 import Toast from '@/components/ui/Toast';
-import { getAdminProfile, updateAdminProfile } from '@/lib/api/admin';
+import { getProfile, updateProfile } from '@/lib/api/profile';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 import { updateSessionUser } from '@/lib/auth/session';
 import {
@@ -48,7 +48,7 @@ export default function PersonalDetailsCard() {
       setLoadError('');
 
       try {
-        const data = await getAdminProfile();
+        const data = await getProfile();
         if (!isActive) {
           return;
         }
@@ -161,7 +161,7 @@ export default function PersonalDetailsCard() {
         payload.profileImage = previewImage;
       }
 
-      const data = await updateAdminProfile(payload);
+      const data = await updateProfile(payload);
       const updatedUser = data?.user || null;
 
       if (updatedUser) {

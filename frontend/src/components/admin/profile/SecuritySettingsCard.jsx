@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 import TextField from '@/components/ui/TextField';
 import Toast from '@/components/ui/Toast';
-import { updateAdminPassword } from '@/lib/api/admin';
+import { updatePassword } from '@/lib/api/profile';
 import { ApiError, getErrorMessage } from '@/lib/api/client';
 import {
   PASSWORD_CHANGE_INITIAL_VALUES,
@@ -86,7 +86,7 @@ export default function SecuritySettingsCard() {
     setIsSubmitting(true);
 
     try {
-      const data = await updateAdminPassword({
+      const data = await updatePassword({
         oldPassword: values.oldPassword,
         newPassword: values.newPassword,
       });
@@ -110,7 +110,7 @@ export default function SecuritySettingsCard() {
   return (
     <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
       <h2 className="text-lg font-semibold text-foreground">הגדרות אבטחה</h2>
-      <p className="mt-1 text-sm text-muted">החלפת סיסמת הגישה לחשבון המנהל</p>
+      <p className="mt-1 text-sm text-muted">החלפת סיסמת הגישה לחשבון</p>
 
       <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-5" aria-busy={isSubmitting}>
         {formError ? <Alert>{formError}</Alert> : null}

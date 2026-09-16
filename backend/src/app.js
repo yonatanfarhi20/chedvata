@@ -7,6 +7,7 @@ const vacationRoutes = require('./routes/vacation.routes');
 const settingsRoutes = require('./routes/settings.routes');
 const studentDashboardRoutes = require('./routes/studentDashboard.routes');
 const rabbiDashboardRoutes = require('./routes/rabbiDashboard.routes');
+const profileRoutes = require('./routes/profile.routes');
 const notFound = require('./middlewares/notFound');
 const errorHandler = require('./middlewares/errorHandler.middleware');
 
@@ -26,6 +27,7 @@ app.use('/api/vacations', vacationRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/student/dashboard', studentDashboardRoutes);
 app.use('/api/rabbi/dashboard', rabbiDashboardRoutes);
+app.use('/api/profile', profileRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

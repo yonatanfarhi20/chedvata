@@ -67,24 +67,6 @@ export function rejectUser(userId) {
   });
 }
 
-export function getAdminProfile() {
-  return apiRequest('/api/admin/profile');
-}
-
-export function updateAdminProfile(payload) {
-  return apiRequest('/api/admin/profile', {
-    method: 'PUT',
-    body: payload,
-  });
-}
-
-export function updateAdminPassword(payload) {
-  return apiRequest('/api/admin/profile/password', {
-    method: 'PUT',
-    body: payload,
-  });
-}
-
 export function getAttendance({ date, activityType }) {
   const params = new URLSearchParams({ date, activityType });
   return apiRequest(`/api/admin/attendance?${params.toString()}`);
