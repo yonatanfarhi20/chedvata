@@ -212,6 +212,7 @@ function PrayerAttendanceContent() {
               statuses={statuses}
               disabled={isEditAlertOpen || isSubmitting}
               statusOptions={PRAYER_ATTENDANCE_STATUS_OPTIONS}
+              showClassColumn={false}
               onStatusChange={handleStatusChange}
             />
           ) : null}

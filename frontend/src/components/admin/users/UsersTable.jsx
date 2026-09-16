@@ -63,8 +63,8 @@ function UserCell({ columnKey, user, rabbis, canChangeStatus, onStatusClick, act
 
   if (columnKey === 'idNumber') {
     return (
-      <td className="px-4 py-3 font-mono text-foreground" dir="ltr">
-        {user.idNumber || '—'}
+      <td className="px-4 py-3 font-mono text-foreground">
+        <span dir="ltr">{user.idNumber || '—'}</span>
       </td>
     );
   }
