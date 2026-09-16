@@ -34,3 +34,10 @@ body {
   color: var(--foreground);
   font-family: var(--font-heebo), Arial, Helvetica, sans-serif;
 }
+
+@layer base {
+  table :is(th, td) {
+    text-align: start;
+    vertical-align: middle;
+  }
+}

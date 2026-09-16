@@ -43,6 +43,7 @@ export default function AttendanceTable({
   disabled = false,
   onStatusChange,
   statusOptions = ATTENDANCE_STATUS_OPTIONS,
+  showClassColumn = true,
 }) {
   if (students.length === 0) {
     return (
@@ -54,11 +55,15 @@ export default function AttendanceTable({
 
   return (
     <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
-      <table className="w-full min-w-[48rem] border-collapse text-start text-sm">
+      <table
+        className={`w-full border-collapse text-start text-sm ${
+          showClassColumn ? 'min-w-[48rem]' : 'min-w-[36rem]'
+        }`}
+      >
         <thead className="bg-background text-muted">
           <tr>
             <th className="px-4 py-3 font-semibold">שם התלמיד</th>
-            <th className="px-4 py-3 font-semibold">כיתה/שיעור</th>
+            {showClassColumn ? <th className="px-4 py-3 font-semibold">כיתה/שיעור</th> : null}
             <th className="px-4 py-3 font-semibold">סטטוס</th>
           </tr>
         </thead>
@@ -69,9 +74,11 @@ export default function AttendanceTable({
             return (
               <tr key={student._id} className="border-t border-border">
                 <td className="px-4 py-3 font-medium text-foreground">{getUserFullName(student)}</td>
-                <td className="px-4 py-3 text-foreground">
-                  {formatClassAffiliation(student.classId)}
-                </td>
+                {showClassColumn ? (
+                  <td className="px-4 py-3 text-foreground">
+                    {formatClassAffiliation(student.classId)}
+                  </td>
+                ) : null}
                 <td className="px-4 py-3">
                   <AttendanceStatusRadios
                     studentId={student._id}
