@@ -1,14 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { useSession } from '@/lib/auth/session';
 import { MenuIcon } from '@/components/layout/TopbarIcons';
 import TopbarProfile from '@/components/layout/TopbarProfile';
-import TopbarSearch from '@/components/layout/TopbarSearch';
 
 export default function Topbar({ isSidebarOpen = false, toggleSidebar, profileHref }) {
   const user = useSession()?.user;
-  const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <header className="z-20 shrink-0 border-b border-border bg-card shadow-sm">
@@ -24,12 +21,9 @@ export default function Topbar({ isSidebarOpen = false, toggleSidebar, profileHr
           <MenuIcon />
         </button>
 
-        <div className="flex min-w-0 flex-1 justify-center">
-          <TopbarSearch
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-          />
-        </div>
+        <h1 className="min-w-0 flex-1 truncate text-center text-lg font-bold tracking-wide text-primary md:text-xl">
+          ישיבת חדוותא
+        </h1>
 
         <div className="relative shrink-0">
           <TopbarProfile user={user} profileHref={profileHref} />
