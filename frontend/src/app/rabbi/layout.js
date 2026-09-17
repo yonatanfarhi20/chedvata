@@ -11,7 +11,7 @@ export default function RabbiLayout({ children }) {
     <AppShell
       allowedRoles={[USER_ROLE.RABBI]}
       navItems={RABBI_NAV_ITEMS}
-      profileHref="/admin/profile"
+      profileHref="/rabbi/profile"
     >
       {children}
     </AppShell>

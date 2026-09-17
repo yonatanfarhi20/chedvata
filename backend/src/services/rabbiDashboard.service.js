@@ -2,7 +2,7 @@ const User = require('../models/User');
 const { ACTIVITY_TYPE } = require('../constants/attendance');
 const { DASHBOARD_PERIOD } = require('../constants/rabbiDashboard');
 const {
-  PRESENT_ONLY_WEIGHTS,
+  WEIGHTED_ATTENDANCE_WEIGHTS,
   getAttendanceScorePercent,
   getAttendanceTrend,
   getPeriodRange,
@@ -21,7 +21,7 @@ async function getRabbiDashboard(actor, { period } = {}) {
     activityType: ACTIVITY_TYPE.LESSON,
     period: selectedPeriod,
     studentIds,
-    weights: PRESENT_ONLY_WEIGHTS,
+    weights: WEIGHTED_ATTENDANCE_WEIGHTS,
   });
 
   return {
@@ -33,6 +33,7 @@ async function getRabbiDashboard(actor, { period } = {}) {
 
 module.exports = {
   getPeriodRange,
-  getPresentPercent: (counts) => getAttendanceScorePercent(counts, PRESENT_ONLY_WEIGHTS),
+  getAttendanceScorePercent: (counts) =>
+    getAttendanceScorePercent(counts, WEIGHTED_ATTENDANCE_WEIGHTS),
   getRabbiDashboard,
 };
