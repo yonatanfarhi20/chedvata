@@ -51,6 +51,12 @@ export const PRAYER_ATTENDANCE_STATUS_OPTIONS = Object.freeze(
   ),
 );
 
+export const ON_LEAVE_BADGE_LABEL = 'בחופשה';
+
+export function toStudentIdSet(studentIds) {
+  return new Set((Array.isArray(studentIds) ? studentIds : []).map(String));
+}
+
 export function getTodayDateInputValue(date = new Date()) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -70,12 +76,23 @@ export function getAttendanceRecordStudentId(record) {
   return String(record.studentId);
 }
 
-export function createDefaultAttendanceList(students) {
-  return students.map((student) => ({
-    studentId: student._id,
-    status: ATTENDANCE_STATUS.PRESENT,
-    student,
-  }));
+/**
+ * Students on an approved leave are reported as usual and default to "absent",
+ * while staying flagged so the tables can tell the two apart.
+ */
+export function createDefaultAttendanceList(students, { leaveStudentIds = [] } = {}) {
+  const onLeave = toStudentIdSet(leaveStudentIds);
+
+  return students.map((student) => {
+    const isOnLeave = onLeave.has(String(student._id));
+
+    return {
+      studentId: student._id,
+      status: isOnLeave ? ATTENDANCE_STATUS.ABSENT : ATTENDANCE_STATUS.PRESENT,
+      isOnLeave,
+      student,
+    };
+  });
 }
 
 export function summarizePrayerAttendance(attendanceList) {
@@ -89,9 +106,13 @@ export function summarizePrayerAttendance(attendanceList) {
         summary.presentCount += 1;
       }
 
+      if (item.isOnLeave) {
+        summary.onLeaveCount += 1;
+      }
+
       return summary;
     },
-    { presentCount: 0, absentCount: 0, lateCount: 0 },
+    { presentCount: 0, absentCount: 0, lateCount: 0, onLeaveCount: 0 },
   );
 }
 

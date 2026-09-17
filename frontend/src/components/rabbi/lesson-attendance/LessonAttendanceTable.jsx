@@ -1,4 +1,10 @@
-import { ATTENDANCE_STATUS, LESSON_ATTENDANCE_STATUS_OPTIONS } from '@/lib/rabbi/lessonAttendance';
+import Badge from '@/components/ui/Badge';
+import {
+  ATTENDANCE_STATUS,
+  LESSON_ATTENDANCE_STATUS_OPTIONS,
+  ON_LEAVE_BADGE_LABEL,
+  toStudentIdSet,
+} from '@/lib/rabbi/lessonAttendance';
 import { getUserFullName } from '@/lib/admin/users';
 
 function LessonAttendanceStatusRadios({ studentId, value, disabled, onChange }) {
@@ -37,9 +43,12 @@ function LessonAttendanceStatusRadios({ studentId, value, disabled, onChange }) 
 export default function LessonAttendanceTable({
   students,
   statuses,
+  leaveStudentIds = [],
   disabled = false,
   onStatusChange,
 }) {
+  const onLeave = toStudentIdSet(leaveStudentIds);
+
   if (students.length === 0) {
     return null;
   }
@@ -59,7 +68,14 @@ export default function LessonAttendanceTable({
 
             return (
               <tr key={student._id} className="border-t border-border">
-                <td className="px-4 py-3 font-medium text-foreground">{getUserFullName(student)}</td>
+                <td className="px-4 py-3 font-medium text-foreground">
+                  <span className="flex flex-wrap items-center gap-2">
+                    {getUserFullName(student)}
+                    {onLeave.has(String(student._id)) ? (
+                      <Badge variant="info">{ON_LEAVE_BADGE_LABEL}</Badge>
+                    ) : null}
+                  </span>
+                </td>
                 <td className="px-4 py-3">
                   <LessonAttendanceStatusRadios
                     studentId={student._id}

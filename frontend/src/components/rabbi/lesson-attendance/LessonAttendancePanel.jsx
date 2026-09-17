@@ -29,6 +29,7 @@ function LessonAttendanceContent() {
   const redirectTimeoutRef = useRef(null);
   const [attendanceList, setAttendanceList] = useState([]);
   const [existingRecords, setExistingRecords] = useState([]);
+  const [leaveStudentIds, setLeaveStudentIds] = useState([]);
   const [isExistingReportOpen, setIsExistingReportOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,6 +58,7 @@ function LessonAttendanceContent() {
     setLoadError('');
     setIsExistingReportOpen(false);
     setExistingRecords([]);
+    setLeaveStudentIds([]);
 
     try {
       const [studentsData, attendanceData] = await Promise.all([
@@ -72,9 +74,15 @@ function LessonAttendanceContent() {
         .slice()
         .sort((left, right) => getUserFullName(left).localeCompare(getUserFullName(right), 'he'));
       const records = Array.isArray(attendanceData?.records) ? attendanceData.records : [];
+      const studentsOnLeave = Array.isArray(attendanceData?.leaveStudentIds)
+        ? attendanceData.leaveStudentIds
+        : [];
 
-      setAttendanceList(createDefaultAttendanceList(students));
+      setAttendanceList(
+        createDefaultAttendanceList(students, { leaveStudentIds: studentsOnLeave }),
+      );
       setExistingRecords(records);
+      setLeaveStudentIds(studentsOnLeave);
 
       if (students.length === 0) {
         scheduleHomeRedirect();
@@ -93,6 +101,7 @@ function LessonAttendanceContent() {
 
       setAttendanceList([]);
       setExistingRecords([]);
+      setLeaveStudentIds([]);
       setLoadError(getErrorMessage(error, 'לא ניתן לטעון את נתוני נוכחות השיעור.'));
     } finally {
       if (requestId === loadRequestIdRef.current) {
@@ -239,6 +248,7 @@ function LessonAttendanceContent() {
             <LessonAttendanceTable
               students={students}
               statuses={statuses}
+              leaveStudentIds={leaveStudentIds}
               disabled={isExistingReportOpen || isSubmitting}
               onStatusChange={handleStatusChange}
             />
@@ -267,6 +277,7 @@ function LessonAttendanceContent() {
         presentCount={summary.presentCount}
         absentCount={summary.absentCount}
         lateCount={summary.lateCount}
+        onLeaveCount={summary.onLeaveCount}
         isSubmitting={isSubmitting}
         onBack={handleCloseSummary}
         onSave={handleConfirmSave}

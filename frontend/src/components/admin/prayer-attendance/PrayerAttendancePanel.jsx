@@ -40,6 +40,7 @@ function PrayerAttendanceContent() {
   const loadRequestIdRef = useRef(0);
   const [attendanceList, setAttendanceList] = useState([]);
   const [existingRecords, setExistingRecords] = useState([]);
+  const [leaveStudentIds, setLeaveStudentIds] = useState([]);
   const [isEditAlertOpen, setIsEditAlertOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,6 +55,7 @@ function PrayerAttendanceContent() {
     setLoadError('');
     setIsEditAlertOpen(false);
     setExistingRecords([]);
+    setLeaveStudentIds([]);
 
     try {
       const today = getTodayDateInputValue();
@@ -71,12 +73,18 @@ function PrayerAttendanceContent() {
 
       const users = Array.isArray(usersData?.users) ? usersData.users : [];
       const records = Array.isArray(attendanceData?.records) ? attendanceData.records : [];
+      const studentsOnLeave = Array.isArray(attendanceData?.leaveStudentIds)
+        ? attendanceData.leaveStudentIds
+        : [];
       const students = users
         .filter(isActiveStudent)
         .sort((left, right) => getUserFullName(left).localeCompare(getUserFullName(right), 'he'));
 
-      setAttendanceList(createDefaultAttendanceList(students));
+      setAttendanceList(
+        createDefaultAttendanceList(students, { leaveStudentIds: studentsOnLeave }),
+      );
       setExistingRecords(records);
+      setLeaveStudentIds(studentsOnLeave);
       setIsEditAlertOpen(records.length > 0);
     } catch (error) {
       if (requestId !== loadRequestIdRef.current) {
@@ -89,6 +97,7 @@ function PrayerAttendanceContent() {
 
       setAttendanceList([]);
       setExistingRecords([]);
+      setLeaveStudentIds([]);
       setLoadError(getErrorMessage(error, 'לא ניתן לטעון את נתוני נוכחות התפילה.'));
     } finally {
       if (requestId === loadRequestIdRef.current) {
@@ -210,6 +219,7 @@ function PrayerAttendanceContent() {
             <AttendanceTable
               students={students}
               statuses={statuses}
+              leaveStudentIds={leaveStudentIds}
               disabled={isEditAlertOpen || isSubmitting}
               statusOptions={PRAYER_ATTENDANCE_STATUS_OPTIONS}
               showClassColumn={false}
@@ -240,6 +250,7 @@ function PrayerAttendanceContent() {
         presentCount={summary.presentCount}
         absentCount={summary.absentCount}
         lateCount={summary.lateCount}
+        onLeaveCount={summary.onLeaveCount}
         isSubmitting={isSubmitting}
         onBack={handleCloseSummary}
         onSave={handleConfirmSave}
