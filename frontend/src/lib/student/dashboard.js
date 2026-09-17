@@ -37,6 +37,12 @@ export const PRAYER_DANGER_TONE = Object.freeze({
 });
 
 export const EMPTY_DASHBOARD = Object.freeze({
+  classAffiliation: {
+    classId: null,
+    rabbiName: '',
+    label: 'טרם שויכת לשיעור',
+    isAssigned: false,
+  },
   vacations: {
     year: null,
     annualQuota: 0,
@@ -58,6 +64,23 @@ export const EMPTY_DASHBOARD = Object.freeze({
 function toCount(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+export function getClassAffiliationOverview(data) {
+  const affiliation = data?.classAffiliation || {};
+  const rabbi = affiliation.rabbi || {};
+  const rabbiName = `${rabbi.firstName || ''} ${rabbi.lastName || ''}`.trim();
+
+  if (!rabbiName) {
+    return EMPTY_DASHBOARD.classAffiliation;
+  }
+
+  return {
+    classId: affiliation.classId ? String(affiliation.classId) : null,
+    rabbiName,
+    label: `השיעור של הרב ${rabbiName}`,
+    isAssigned: true,
+  };
 }
 
 export function getVacationOverview(data) {
