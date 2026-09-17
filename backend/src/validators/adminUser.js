@@ -77,9 +77,11 @@ function parseAdminCreateUserPayload(payload = {}) {
   const role = parseRole(payload.role, errors, { required: false });
   data.role = role || USER_ROLE.STUDENT;
 
-  const classId = parseOptionalClassId(payload.classId, errors);
-  if (classId) {
-    data.classId = classId;
+  if (data.role === USER_ROLE.STUDENT) {
+    const classId = parseOptionalClassId(payload.classId, errors);
+    if (classId) {
+      data.classId = classId;
+    }
   }
 
   throwIfErrors(errors);
@@ -88,7 +90,7 @@ function parseAdminCreateUserPayload(payload = {}) {
   return data;
 }
 
-function parseAdminUpdateUserPayload(payload = {}) {
+function parseAdminUpdateUserPayload(payload = {}, { currentRole } = {}) {
   const errors = {};
   const data = {};
 
@@ -122,11 +124,19 @@ function parseAdminUpdateUserPayload(payload = {}) {
     }
   }
 
-  if (payload.classId !== undefined) {
-    const classId = parseOptionalClassId(payload.classId, errors);
-    if (classId !== undefined && !errors.classId) {
-      data.classId = classId;
+  const nextRole = data.role || currentRole;
+
+  if (nextRole === USER_ROLE.STUDENT) {
+    if (payload.classId !== undefined) {
+      const classId = parseOptionalClassId(payload.classId, errors);
+      if (classId !== undefined && !errors.classId) {
+        data.classId = classId;
+      }
     }
+  } else if (data.role && currentRole === USER_ROLE.STUDENT) {
+    // A rabbi's existing classId still identifies the class his students point at,
+    // so it is only cleared when a student is promoted to a staff role.
+    data.classId = null;
   }
 
   throwIfErrors(errors);

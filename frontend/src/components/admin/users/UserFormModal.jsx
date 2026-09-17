@@ -7,7 +7,15 @@ import Modal from '@/components/ui/Modal';
 import SelectField from '@/components/ui/SelectField';
 import Spinner from '@/components/ui/Spinner';
 import TextField from '@/components/ui/TextField';
-import { USER_ROLE_LABELS, getRabbis, getRabbiSelectValue, findRabbiByClassId, getUserFullName, resolveClassIdFromRabbiSelection } from '@/lib/admin/users';
+import {
+  USER_ROLE_LABELS,
+  getRabbis,
+  getRabbiSelectValue,
+  findRabbiByClassId,
+  getUserFullName,
+  isStudentRole,
+  resolveClassIdFromRabbiSelection,
+} from '@/lib/admin/users';
 import { createUser, updateUser } from '@/lib/api/admin';
 import { ApiError } from '@/lib/api/client';
 import { USER_ROLE } from '@/lib/auth/constants';
@@ -41,6 +49,7 @@ export default function UserFormModal({ isOpen, onClose, user = null, users = []
   const [touched, setTouched] = useState({});
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const showClassField = isStudentRole(values.role);
 
   useEffect(() => {
     if (!isOpen) {
@@ -72,6 +81,11 @@ export default function UserFormModal({ isOpen, onClose, user = null, users = []
   function handleChange(event) {
     const { name, value } = event.target;
     const nextValues = { ...values, [name]: value };
+
+    if (name === 'role' && !isStudentRole(value)) {
+      nextValues.classId = '';
+    }
+
     setValues(nextValues);
 
     if (touched[name]) {
@@ -93,7 +107,7 @@ export default function UserFormModal({ isOpen, onClose, user = null, users = []
       ...ADMIN_USER_PROFILE_FIELDS.map((field) => field.name),
       'password',
       'role',
-      'classId',
+      ...(showClassField ? ['classId'] : []),
     ];
     setTouched(Object.fromEntries(fieldNames.map((name) => [name, true])));
 
@@ -218,7 +232,7 @@ export default function UserFormModal({ isOpen, onClose, user = null, users = []
           ))}
         </SelectField>
 
-        {isEdit ? (
+        {showClassField && isEdit ? (
           <div className="flex flex-col gap-1.5">
             <SelectField
               name="classId"
@@ -241,7 +255,9 @@ export default function UserFormModal({ isOpen, onClose, user = null, users = []
             </SelectField>
             <p className="-mt-1 text-xs text-muted">בחרו את הרב של השיעור.</p>
           </div>
-        ) : (
+        ) : null}
+
+        {showClassField && !isEdit ? (
           <TextField
             name="classId"
             label="שיוך כיתתי"
@@ -254,7 +270,7 @@ export default function UserFormModal({ isOpen, onClose, user = null, users = []
             onChange={handleChange}
             onBlur={handleBlur}
           />
-        )}
+        ) : null}
 
         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
           <Button

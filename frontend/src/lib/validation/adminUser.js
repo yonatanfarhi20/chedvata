@@ -1,3 +1,4 @@
+import { isStudentRole } from '@/lib/admin/users';
 import { USER_ROLE } from '@/lib/auth/constants';
 import { validateRegisterField } from '@/lib/validation/register';
 
@@ -101,7 +102,7 @@ export function validateAdminUserForm(values, { isEdit = false } = {}) {
   }
 
   const classId = typeof values.classId === 'string' ? values.classId.trim() : '';
-  if (classId && !OBJECT_ID_REGEX.test(classId)) {
+  if (isStudentRole(values.role) && classId && !OBJECT_ID_REGEX.test(classId)) {
     errors.classId = 'מזהה הכיתה אינו תקין';
   }
 
@@ -117,7 +118,7 @@ export function toAdminUserPayload(values, { isEdit = false } = {}) {
     email: values.email.trim(),
     address: values.address.trim(),
     role: values.role,
-    classId: values.classId.trim() || null,
+    classId: isStudentRole(values.role) ? values.classId.trim() || null : null,
   };
 
   const password = typeof values.password === 'string' ? values.password.trim() : '';

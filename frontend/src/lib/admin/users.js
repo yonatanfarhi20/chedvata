@@ -91,8 +91,12 @@ export function matchesUserSearch(user, query) {
   return fullName.includes(normalized) || idNumber.includes(normalized);
 }
 
+export function isStudentRole(role) {
+  return role === USER_ROLE.STUDENT;
+}
+
 export function isStudentUser(user) {
-  return user?.role === USER_ROLE.STUDENT;
+  return isStudentRole(user?.role);
 }
 
 export function isStaffUser(user) {
