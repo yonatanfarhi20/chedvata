@@ -21,6 +21,7 @@ const {
   parseVacationStatusPayload,
 } = require('../validators/vacations');
 const { getVacationSettings } = require('./systemSettings.service');
+const { exemptAttendanceForLeave } = require('./leaveExemption.service');
 
 function countInclusiveDays(startDate, endDate) {
   return Math.round((endDate.getTime() - startDate.getTime()) / MS_PER_DAY) + 1;
@@ -278,6 +279,8 @@ async function updateVacationStatus(vacationId, payload, { actorId } = {}) {
   await vacation.save();
 
   if (status === VACATION_STATUS.APPROVED) {
+    await exemptAttendanceForLeave(vacation);
+
     const student = await User.findById(vacation.studentId).select('_id firstName lastName classId');
     await notifyStudentOfVacation(vacation, {
       senderId: actorId,
@@ -309,6 +312,8 @@ async function adminCreateVacation(payload, { actorId } = {}) {
     status: VACATION_STATUS.APPROVED,
     createdByAdmin: true,
   });
+
+  await exemptAttendanceForLeave(vacation);
 
   await notifyStudentOfVacation(vacation, {
     senderId: actorId,

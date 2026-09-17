@@ -1,14 +1,17 @@
 const Attendance = require('../models/Attendance.model');
 const User = require('../models/User');
 const { ACTIVITY_TYPE, ATTENDANCE_STATUS } = require('../constants/attendance');
-const { PHONE_PENALTY_RULES } = require('../constants/phonePenalties');
+const { PHONE_DEPOSIT_STATUS, PHONE_PENALTY_RULES } = require('../constants/phonePenalties');
 const { LESSON_DAY_REASON, LESSON_DAY_STATUS } = require('../constants/studentDashboard');
 const { USER_ROLE, USER_STATUS } = require('../constants/user');
 const { getCronTimezone } = require('../config/cron');
 const { getTodayUtcDate, getZonedDateTimeParts, normalizeToUtcDate } = require('../utils/time');
 const {
   buildInfractionDeletionTimeline,
+  evaluateStudentPhonePenalty,
+  getDepositRemaining,
   listActivePrayerInfractions,
+  promoteCompletedPhoneDeposits,
 } = require('./phonePenalty.service');
 const { getQuotaSnapshot } = require('./vacation.service');
 
@@ -106,7 +109,10 @@ async function getStudentDashboard(student) {
   const monthStart = new Date(Date.UTC(year, month - 1, 1));
   const monthEnd = new Date(Date.UTC(year, month, 0));
 
-  const [classAffiliation, quota, infractions, lessonRecords] = await Promise.all([
+  await evaluateStudentPhonePenalty(studentId);
+  await promoteCompletedPhoneDeposits();
+
+  const [classAffiliation, quota, infractions, lessonRecords, currentStudent] = await Promise.all([
     getClassAffiliation(student),
     getQuotaSnapshot(studentId),
     listActivePrayerInfractions(studentId),
@@ -115,11 +121,13 @@ async function getStudentDashboard(student) {
       activityType: ACTIVITY_TYPE.LESSON,
       date: { $gte: monthStart, $lte: monthEnd },
     }).select('date status'),
+    User.findById(studentId).select('phoneDepositStatus phoneDepositStartedAt'),
   ]);
 
   const activeAbsences = infractions.filter(
     (infraction) => infraction.status === ATTENDANCE_STATUS.ABSENT,
   ).length;
+  const depositRemaining = getDepositRemaining(currentStudent?.phoneDepositStartedAt);
 
   return {
     classAffiliation,
@@ -133,6 +141,8 @@ async function getStudentDashboard(student) {
       activeAbsences,
       maxAbsences: PHONE_PENALTY_RULES.ABSENCES_FOR_DEPOSIT,
       events: buildInfractionDeletionTimeline(infractions, todayUtc),
+      phoneDepositStatus: currentStudent?.phoneDepositStatus || PHONE_DEPOSIT_STATUS.NONE,
+      remainingDays: depositRemaining.remainingDays,
     },
     lessons: {
       year,

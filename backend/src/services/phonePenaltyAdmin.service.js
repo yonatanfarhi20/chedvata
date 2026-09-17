@@ -10,7 +10,8 @@ const { USER_ROLE, USER_STATUS } = require('../constants/user');
 const {
   buildActivePrayerInfractionFilter,
   countActivePrayerAbsences,
-  getDepositReadyAt,
+  evaluateAllActiveStudentPenalties,
+  getDepositRemaining,
   promoteCompletedPhoneDeposits,
 } = require('./phonePenalty.service');
 
@@ -30,8 +31,7 @@ async function findActiveStudent(studentId) {
 
 async function toPenaltyStudentDto(student, now = new Date()) {
   const absenceCount = await countActivePrayerAbsences(student._id);
-  const readyAt = getDepositReadyAt(student.phoneDepositStartedAt);
-  const remainingMs = readyAt ? Math.max(0, readyAt.getTime() - now.getTime()) : 0;
+  const { readyAt, remainingMs } = getDepositRemaining(student.phoneDepositStartedAt, now);
 
   return {
     studentId: student._id,
@@ -47,6 +47,7 @@ async function toPenaltyStudentDto(student, now = new Date()) {
 }
 
 async function listPhonePenaltyQueues() {
+  await evaluateAllActiveStudentPenalties();
   await promoteCompletedPhoneDeposits();
 
   const students = await User.find({

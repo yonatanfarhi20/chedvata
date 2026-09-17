@@ -8,6 +8,8 @@ const PHONE_DEPOSIT_STATUS = Object.freeze({
 const ATTENDANCE_PENALTY_STATE = Object.freeze({
   ACTIVE: 'active',
   CONSUMED: 'consumed',
+  // Reported on an approved leave day: visible in the tables, never counted as a sanction.
+  EXEMPT: 'exempt',
 });
 
 const PHONE_PENALTY_RULES = Object.freeze({

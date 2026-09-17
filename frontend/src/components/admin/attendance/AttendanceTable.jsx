@@ -1,6 +1,9 @@
+import Badge from '@/components/ui/Badge';
 import {
   ATTENDANCE_STATUS,
   ATTENDANCE_STATUS_OPTIONS,
+  ON_LEAVE_BADGE_LABEL,
+  toStudentIdSet,
 } from '@/lib/admin/attendance';
 import { formatClassAffiliation, getUserFullName } from '@/lib/admin/users';
 
@@ -40,11 +43,14 @@ function AttendanceStatusRadios({ studentId, value, disabled, onChange, statusOp
 export default function AttendanceTable({
   students,
   statuses,
+  leaveStudentIds = [],
   disabled = false,
   onStatusChange,
   statusOptions = ATTENDANCE_STATUS_OPTIONS,
   showClassColumn = true,
 }) {
+  const onLeave = toStudentIdSet(leaveStudentIds);
+
   if (students.length === 0) {
     return (
       <p className="rounded-xl border border-border bg-card px-4 py-6 text-sm text-muted shadow-sm">
@@ -73,7 +79,14 @@ export default function AttendanceTable({
 
             return (
               <tr key={student._id} className="border-t border-border">
-                <td className="px-4 py-3 font-medium text-foreground">{getUserFullName(student)}</td>
+                <td className="px-4 py-3 font-medium text-foreground">
+                  <span className="flex flex-wrap items-center gap-2">
+                    {getUserFullName(student)}
+                    {onLeave.has(String(student._id)) ? (
+                      <Badge variant="info">{ON_LEAVE_BADGE_LABEL}</Badge>
+                    ) : null}
+                  </span>
+                </td>
                 {showClassColumn ? (
                   <td className="px-4 py-3 text-foreground">
                     {formatClassAffiliation(student.classId)}

@@ -5,10 +5,13 @@ export default function PrayerAttendanceSummaryModal({
   presentCount = 0,
   absentCount = 0,
   lateCount = 0,
+  onLeaveCount = 0,
   isSubmitting = false,
   onBack,
   onSave,
 }) {
+  const leaveNote = onLeaveCount > 0 ? ` (מתוכם ${onLeaveCount} בחופשה, ללא סנקציות)` : '';
+
   return (
     <Modal
       open={open}
@@ -18,7 +21,7 @@ export default function PrayerAttendanceSummaryModal({
       onClose={onBack}
       onConfirm={onSave}
     >
-      {`סיכום נוכחות: ${presentCount} נוכחים, ${absentCount} נעדרים, ${lateCount} מאחרים`}
+      {`סיכום נוכחות: ${presentCount} נוכחים, ${absentCount} נעדרים${leaveNote}, ${lateCount} מאחרים`}
     </Modal>
   );
 }

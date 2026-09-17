@@ -6,6 +6,10 @@ const { ERROR_MESSAGES } = require('../constants/errors');
 const { USER_ROLE } = require('../constants/user');
 const phonePenaltyService = require('./phonePenalty.service');
 const {
+  listStudentIdsOnApprovedLeave,
+  syncLeaveExemptions,
+} = require('./leaveExemption.service');
+const {
   parseAttendanceQuery,
   parseAttendanceSavePayload,
 } = require('../validators/attendance');
@@ -13,12 +17,16 @@ const {
 async function listAttendance(query) {
   const { date, activityType } = parseAttendanceQuery(query);
 
-  const records = await Attendance.find({ date, activityType }).sort({ createdAt: 1 });
+  const [records, leaveStudentIds] = await Promise.all([
+    Attendance.find({ date, activityType }).sort({ createdAt: 1 }),
+    listStudentIdsOnApprovedLeave(date),
+  ]);
 
   return {
     date,
     activityType,
     records,
+    leaveStudentIds,
   };
 }
 
@@ -67,6 +75,8 @@ async function saveAttendance(payload, { reportedBy } = {}) {
 
   await Attendance.bulkWrite(operations, { ordered: false });
 
+  const leaveStudentIds = await syncLeaveExemptions({ date, activityType, studentIds });
+
   if (activityType === ACTIVITY_TYPE.PRAYER) {
     await phonePenaltyService.evaluatePrayerAttendancePenalties(studentIds);
   }
@@ -77,6 +87,7 @@ async function saveAttendance(payload, { reportedBy } = {}) {
     date,
     activityType,
     records: savedRecords,
+    leaveStudentIds,
   };
 }
 

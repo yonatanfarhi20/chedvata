@@ -7,6 +7,10 @@ const { ERROR_MESSAGES } = require('../constants/errors');
 const { USER_ROLE, USER_STATUS } = require('../constants/user');
 const { getTodayUtcDate } = require('../utils/time');
 const { getUserClassId } = require('../utils/userClass');
+const {
+  listStudentIdsOnApprovedLeave,
+  syncLeaveExemptions,
+} = require('./leaveExemption.service');
 const { parseLessonAttendanceSavePayload } = require('../validators/lessonAttendance');
 
 function getLessonAttendanceDate() {
@@ -47,16 +51,23 @@ async function listRabbiClassStudents(actor) {
 
 async function getRabbiLessonAttendanceToday(actor) {
   const date = getLessonAttendanceDate();
-  const records = await Attendance.find({
-    rabbiId: actor._id,
-    date,
-    activityType: ACTIVITY_TYPE.LESSON,
-  }).sort({ createdAt: 1 });
+  const classStudentIds = getUserClassId(actor)
+    ? await User.distinct('_id', buildRabbiClassStudentFilter(actor))
+    : [];
+  const [records, leaveStudentIds] = await Promise.all([
+    Attendance.find({
+      rabbiId: actor._id,
+      date,
+      activityType: ACTIVITY_TYPE.LESSON,
+    }).sort({ createdAt: 1 }),
+    listStudentIdsOnApprovedLeave(date, classStudentIds),
+  ]);
 
   return {
     date,
     alreadyReported: records.length > 0,
     records,
+    leaveStudentIds,
   };
 }
 
@@ -107,6 +118,12 @@ async function saveRabbiLessonAttendance(actor, payload) {
 
   await Attendance.bulkWrite(operations, { ordered: false });
 
+  const leaveStudentIds = await syncLeaveExemptions({
+    date,
+    activityType: ACTIVITY_TYPE.LESSON,
+    studentIds,
+  });
+
   const savedRecords = await Attendance.find({
     rabbiId: actor._id,
     date,
@@ -116,6 +133,7 @@ async function saveRabbiLessonAttendance(actor, payload) {
   return {
     date,
     records: savedRecords,
+    leaveStudentIds,
   };
 }
 

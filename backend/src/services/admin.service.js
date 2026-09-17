@@ -174,19 +174,19 @@ async function createUser(payload) {
 
 async function updateUser(rawId, payload) {
   const id = parseUserId(rawId);
-  const data = parseAdminUpdateUserPayload(payload);
+  const user = await User.findById(id).select('+password');
+
+  if (!user) {
+    throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, 404);
+  }
+
+  const data = parseAdminUpdateUserPayload(payload, { currentRole: user.role });
 
   await assertUniqueUserFields({
     email: data.email,
     idNumber: data.idNumber,
     excludeId: id,
   });
-
-  const user = await User.findById(id).select('+password');
-
-  if (!user) {
-    throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, 404);
-  }
 
   Object.entries(data).forEach(([field, value]) => {
     if (field === 'classId' && value === null) {

@@ -1,9 +1,11 @@
 import {
   ATTENDANCE_STATUS,
+  ON_LEAVE_BADGE_LABEL,
   PRAYER_ATTENDANCE_STATUS_OPTIONS,
   applyExistingAttendanceRecords,
   createDefaultAttendanceList,
   summarizePrayerAttendance,
+  toStudentIdSet,
 } from '@/lib/admin/attendance';
 
 export const LESSON_ATTENDANCE_STATUS_OPTIONS = PRAYER_ATTENDANCE_STATUS_OPTIONS;
@@ -21,6 +23,8 @@ export const summarizeLessonAttendance = summarizePrayerAttendance;
 
 export {
   ATTENDANCE_STATUS,
+  ON_LEAVE_BADGE_LABEL,
   applyExistingAttendanceRecords,
   createDefaultAttendanceList,
+  toStudentIdSet,
 };

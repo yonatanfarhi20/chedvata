@@ -5,10 +5,13 @@ export default function LessonAttendanceSummaryModal({
   presentCount = 0,
   absentCount = 0,
   lateCount = 0,
+  onLeaveCount = 0,
   isSubmitting = false,
   onBack,
   onSave,
 }) {
+  const leaveNote = onLeaveCount > 0 ? ` (מתוכם ${onLeaveCount} בחופשה)` : '';
+
   return (
     <Modal
       open={open}
@@ -18,7 +21,7 @@ export default function LessonAttendanceSummaryModal({
       onClose={onBack}
       onConfirm={onSave}
     >
-      {`${presentCount} נוכחים, ${absentCount} נעדרים, ${lateCount} איחר`}
+      {`${presentCount} נוכחים, ${absentCount} נעדרים${leaveNote}, ${lateCount} איחר`}
     </Modal>
   );
 }

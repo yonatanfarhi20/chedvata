@@ -1,6 +1,6 @@
 import Button from '@/components/ui/Button';
 import { getPhonePenaltyStudentId } from '@/lib/admin/phonePenalties';
-import { formatClassAffiliation, getUserFullName } from '@/lib/admin/users';
+import { getUserFullName } from '@/lib/admin/users';
 
 export default function PendingDepositList({
   students = [],
@@ -21,7 +21,6 @@ export default function PendingDepositList({
         <thead className="bg-background">
           <tr>
             <th className="px-4 py-3 text-start text-sm font-semibold text-foreground">תלמיד</th>
-            <th className="px-4 py-3 text-start text-sm font-semibold text-foreground">כיתה</th>
             <th className="px-4 py-3 text-start text-sm font-semibold text-foreground">חיסורים</th>
             <th className="px-4 py-3 text-start text-sm font-semibold text-foreground">פעולה</th>
           </tr>
@@ -34,9 +33,6 @@ export default function PendingDepositList({
             return (
               <tr key={studentId}>
                 <td className="px-4 py-3 font-medium text-foreground">{getUserFullName(student)}</td>
-                <td className="px-4 py-3 text-sm text-muted">
-                  {formatClassAffiliation(student?.classId)}
-                </td>
                 <td className="px-4 py-3 text-sm text-foreground">{student.absenceCount ?? 5}</td>
                 <td className="px-4 py-3">
                   <Button
