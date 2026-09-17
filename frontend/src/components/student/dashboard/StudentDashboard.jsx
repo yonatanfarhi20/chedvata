@@ -5,7 +5,10 @@ import DashboardSectionCard from '@/components/student/dashboard/DashboardSectio
 import LessonAttendanceCalendar from '@/components/student/dashboard/LessonAttendanceCalendar';
 import PrayerDangerGauge from '@/components/student/dashboard/PrayerDangerGauge';
 import PrayerExpiryTimeline from '@/components/student/dashboard/PrayerExpiryTimeline';
-import StudentDashboardSkeleton from '@/components/student/dashboard/StudentDashboardSkeleton';
+import StudentClassAffiliation from '@/components/student/dashboard/StudentClassAffiliation';
+import StudentDashboardSkeleton, {
+  ClassAffiliationSkeleton,
+} from '@/components/student/dashboard/StudentDashboardSkeleton';
 import VacationDonutChart from '@/components/student/dashboard/VacationDonutChart';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
@@ -14,6 +17,7 @@ import { ApiError, getErrorMessage } from '@/lib/api/client';
 import { useSession } from '@/lib/auth/session';
 import {
   EMPTY_DASHBOARD,
+  getClassAffiliationOverview,
   getLessonOverview,
   getPrayerOverview,
   getVacationOverview,
@@ -40,6 +44,7 @@ export default function StudentDashboard() {
       }
 
       setOverview({
+        classAffiliation: getClassAffiliationOverview(data),
         vacations: getVacationOverview(data),
         prayers: getPrayerOverview(data),
         lessons: getLessonOverview(data),
@@ -80,6 +85,10 @@ export default function StudentDashboard() {
               ? `שלום ${user.firstName}, כאן מוצג מצב החופשות, התפילות והשיעורים שלך.`
               : 'תמונת מצב אישית של חופשות, נוכחות בתפילות ונוכחות בשיעורים.'}
           </p>
+          {isLoading ? <ClassAffiliationSkeleton /> : null}
+          {!isLoading && !loadError ? (
+            <StudentClassAffiliation affiliation={overview.classAffiliation} />
+          ) : null}
         </header>
 
         {loadError ? (

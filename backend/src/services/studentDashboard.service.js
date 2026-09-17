@@ -1,7 +1,9 @@
 const Attendance = require('../models/Attendance.model');
+const User = require('../models/User');
 const { ACTIVITY_TYPE, ATTENDANCE_STATUS } = require('../constants/attendance');
 const { PHONE_PENALTY_RULES } = require('../constants/phonePenalties');
 const { LESSON_DAY_REASON, LESSON_DAY_STATUS } = require('../constants/studentDashboard');
+const { USER_ROLE, USER_STATUS } = require('../constants/user');
 const { getCronTimezone } = require('../config/cron');
 const { getTodayUtcDate, getZonedDateTimeParts, normalizeToUtcDate } = require('../utils/time');
 const {
@@ -68,14 +70,44 @@ function buildLessonCalendarDays(year, month, records) {
   return days;
 }
 
-async function getStudentDashboard(studentId) {
+async function getClassAffiliation(student) {
+  const classId = student?.classId;
+
+  if (!classId) {
+    return {
+      classId: null,
+      rabbi: null,
+    };
+  }
+
+  const rabbi = await User.findOne({
+    role: USER_ROLE.RABBI,
+    status: USER_STATUS.ACTIVE,
+    $or: [{ _id: classId }, { classId }],
+  }).select('firstName lastName');
+
+  return {
+    classId: String(classId),
+    rabbi: rabbi
+      ? {
+          id: String(rabbi._id),
+          firstName: rabbi.firstName,
+          lastName: rabbi.lastName,
+        }
+      : null,
+  };
+}
+
+async function getStudentDashboard(student) {
+  const studentId = student?._id;
   const timeZone = getCronTimezone();
   const todayUtc = getTodayUtcDate(timeZone);
   const { year, month } = getZonedDateTimeParts(new Date(), timeZone);
   const monthStart = new Date(Date.UTC(year, month - 1, 1));
   const monthEnd = new Date(Date.UTC(year, month, 0));
 
-  const [quota, infractions, lessonRecords] = await Promise.all([
+  const [classAffiliation, quota, infractions, lessonRecords] = await Promise.all([
+    getClassAffiliation(student),
     getQuotaSnapshot(studentId),
     listActivePrayerInfractions(studentId),
     Attendance.find({
@@ -90,6 +122,7 @@ async function getStudentDashboard(studentId) {
   ).length;
 
   return {
+    classAffiliation,
     vacations: {
       year: quota.year,
       annualQuota: quota.annualQuota,

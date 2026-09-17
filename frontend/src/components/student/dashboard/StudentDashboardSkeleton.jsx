@@ -10,6 +10,15 @@ function CardSkeleton({ className = '' }) {
   );
 }
 
+export function ClassAffiliationSkeleton() {
+  return (
+    <div
+      className="mt-3 h-8 w-56 animate-pulse rounded-full bg-border"
+      aria-hidden="true"
+    />
+  );
+}
+
 export default function StudentDashboardSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-3" aria-hidden="true">
