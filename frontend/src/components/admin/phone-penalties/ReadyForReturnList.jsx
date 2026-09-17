@@ -1,6 +1,6 @@
 import Button from '@/components/ui/Button';
 import { getPhonePenaltyStudentId } from '@/lib/admin/phonePenalties';
-import { formatClassAffiliation, getUserFullName } from '@/lib/admin/users';
+import { getUserFullName } from '@/lib/admin/users';
 
 export default function ReadyForReturnList({
   students = [],
@@ -21,7 +21,6 @@ export default function ReadyForReturnList({
         <thead className="bg-background">
           <tr>
             <th className="px-4 py-3 text-start text-sm font-semibold text-foreground">תלמיד</th>
-            <th className="px-4 py-3 text-start text-sm font-semibold text-foreground">כיתה</th>
             <th className="px-4 py-3 text-start text-sm font-semibold text-foreground">פעולה</th>
           </tr>
         </thead>
@@ -33,9 +32,6 @@ export default function ReadyForReturnList({
             return (
               <tr key={studentId}>
                 <td className="px-4 py-3 font-medium text-foreground">{getUserFullName(student)}</td>
-                <td className="px-4 py-3 text-sm text-muted">
-                  {formatClassAffiliation(student?.classId)}
-                </td>
                 <td className="px-4 py-3">
                   <Button
                     type="button"
