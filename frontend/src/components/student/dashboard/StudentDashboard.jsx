@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import DashboardSectionCard from '@/components/student/dashboard/DashboardSectionCard';
 import LessonAttendanceCalendar from '@/components/student/dashboard/LessonAttendanceCalendar';
+import PhoneDepositNotice from '@/components/student/dashboard/PhoneDepositNotice';
 import PrayerDangerGauge from '@/components/student/dashboard/PrayerDangerGauge';
 import PrayerExpiryTimeline from '@/components/student/dashboard/PrayerExpiryTimeline';
 import StudentClassAffiliation from '@/components/student/dashboard/StudentClassAffiliation';
@@ -19,6 +20,7 @@ import {
   EMPTY_DASHBOARD,
   getClassAffiliationOverview,
   getLessonOverview,
+  getPhoneDepositNotice,
   getPrayerOverview,
   getVacationOverview,
 } from '@/lib/student/dashboard';
@@ -116,12 +118,15 @@ export default function StudentDashboard() {
               title="נוכחות תפילות"
               description="מעקב חיסורים פעילים וסטטוס המחיקה לפי כללי ההתיישנות."
             >
-              <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
-                <PrayerDangerGauge
-                  activeAbsences={overview.prayers.activeAbsences}
-                  maxAbsences={overview.prayers.maxAbsences}
-                />
-                <PrayerExpiryTimeline events={overview.prayers.events} />
+              <div className="flex flex-1 flex-col gap-4">
+                <PhoneDepositNotice notice={getPhoneDepositNotice(overview.prayers)} />
+                <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
+                  <PrayerDangerGauge
+                    activeAbsences={overview.prayers.activeAbsences}
+                    maxAbsences={overview.prayers.maxAbsences}
+                  />
+                  <PrayerExpiryTimeline events={overview.prayers.events} />
+                </div>
               </div>
             </DashboardSectionCard>
 

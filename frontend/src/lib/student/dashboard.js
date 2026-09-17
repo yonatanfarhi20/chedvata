@@ -36,6 +36,13 @@ export const PRAYER_DANGER_TONE = Object.freeze({
   DANGER: 'danger',
 });
 
+export const PHONE_DEPOSIT_STATUS = Object.freeze({
+  NONE: 'none',
+  PENDING_DEPOSIT: 'pending_deposit',
+  DEPOSITED: 'deposited',
+  READY_FOR_RETURN: 'ready_for_return',
+});
+
 export const EMPTY_DASHBOARD = Object.freeze({
   classAffiliation: {
     classId: null,
@@ -53,6 +60,8 @@ export const EMPTY_DASHBOARD = Object.freeze({
     activeAbsences: 0,
     maxAbsences: 5,
     events: [],
+    phoneDepositStatus: PHONE_DEPOSIT_STATUS.NONE,
+    remainingDays: 0,
   },
   lessons: {
     year: null,
@@ -118,12 +127,62 @@ export function getVacationUsageTone({ usedDays, annualQuota }) {
 
 export function getPrayerOverview(data) {
   const prayers = data?.prayers || {};
+  const maxAbsences = toCount(prayers.maxAbsences) || EMPTY_DASHBOARD.prayers.maxAbsences;
+  const activeAbsences = toCount(prayers.activeAbsences);
+  const phoneDepositStatus = Object.values(PHONE_DEPOSIT_STATUS).includes(prayers.phoneDepositStatus)
+    ? prayers.phoneDepositStatus
+    : EMPTY_DASHBOARD.prayers.phoneDepositStatus;
 
   return {
-    activeAbsences: toCount(prayers.activeAbsences),
-    maxAbsences: toCount(prayers.maxAbsences) || EMPTY_DASHBOARD.prayers.maxAbsences,
+    activeAbsences,
+    maxAbsences,
     events: Array.isArray(prayers.events) ? prayers.events : [],
+    phoneDepositStatus:
+      phoneDepositStatus === PHONE_DEPOSIT_STATUS.NONE && activeAbsences >= maxAbsences
+        ? PHONE_DEPOSIT_STATUS.PENDING_DEPOSIT
+        : phoneDepositStatus,
+    remainingDays: toCount(prayers.remainingDays),
   };
+}
+
+export function getPhoneDepositNotice({
+  phoneDepositStatus,
+  remainingDays,
+} = EMPTY_DASHBOARD.prayers) {
+  if (phoneDepositStatus === PHONE_DEPOSIT_STATUS.PENDING_DEPOSIT) {
+    return {
+      tone: PRAYER_DANGER_TONE.DANGER,
+      message: 'יש להפקיד את הטלפון. הגעת לחמש חיסורים פעילים בתפילה.',
+    };
+  }
+
+  if (phoneDepositStatus === PHONE_DEPOSIT_STATUS.DEPOSITED) {
+    const days = toCount(remainingDays);
+
+    if (days <= 0) {
+      return {
+        tone: PRAYER_DANGER_TONE.WARNING,
+        message: 'הטלפון בהפקדה. תקופת ההמתנה הסתיימה וניתן לקבל אותו חזרה.',
+      };
+    }
+
+    return {
+      tone: PRAYER_DANGER_TONE.WARNING,
+      message:
+        days === 1
+          ? 'הטלפון בהפקדה. נותר יום אחד עד לקבלה חזרה.'
+          : `הטלפון בהפקדה. נותרו ${days} ימים עד לקבלה חזרה.`,
+    };
+  }
+
+  if (phoneDepositStatus === PHONE_DEPOSIT_STATUS.READY_FOR_RETURN) {
+    return {
+      tone: PRAYER_DANGER_TONE.SAFE,
+      message: 'תקופת ההפקדה הסתיימה. ניתן לקבל את הטלפון חזרה.',
+    };
+  }
+
+  return null;
 }
 
 export function getPrayerDangerTone(activeAbsences) {

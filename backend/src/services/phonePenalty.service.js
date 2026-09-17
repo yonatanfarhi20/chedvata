@@ -185,6 +185,28 @@ function getDepositReadyAt(startedAt) {
   );
 }
 
+function getDepositRemaining(startedAt, now = new Date()) {
+  const readyAt = getDepositReadyAt(startedAt);
+
+  if (!readyAt) {
+    return {
+      readyAt: null,
+      remainingMs: 0,
+      remainingDays: 0,
+    };
+  }
+
+  const remainingMs = Math.max(0, readyAt.getTime() - now.getTime());
+  const remainingDays =
+    remainingMs === 0 ? 0 : Math.ceil(remainingMs / PHONE_PENALTY_RULES.MS_PER_DAY);
+
+  return {
+    readyAt,
+    remainingMs,
+    remainingDays,
+  };
+}
+
 async function expireStudentInfractions(studentId, todayUtc) {
   const infractions = await listActivePrayerInfractions(studentId);
 
@@ -275,6 +297,7 @@ module.exports = {
   expireStudentInfractions,
   getConsecutiveCleanWeeks,
   getDepositReadyAt,
+  getDepositRemaining,
   getRequiredCleanDays,
   getRequiredCleanWeeks,
   listActivePrayerInfractions,
