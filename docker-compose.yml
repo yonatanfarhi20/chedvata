@@ -1,0 +1,44 @@
+services:
+  mongo:
+    image: mongo:4
+    container_name: chedvata_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - chedvata_network
+
+  backend:
+    build: ./backend
+    container_name: chedvata_backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - mongo
+    networks:
+      - chedvata_network
+
+  frontend:
+    build: 
+      context: ./frontend
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    container_name: chedvata_frontend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env.local
+    depends_on:
+      - backend
+    networks:
+      - chedvata_network
+
+networks:
+  chedvata_network:
+    driver: bridge
+
+volumes:
+  mongo_data:
